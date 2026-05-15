@@ -1,0 +1,138 @@
+/* ============================================
+   设计 Token 系统 — 电商平台 (淘宝风格)
+   ============================================ */
+
+:root {
+  /* 品牌色 — 淘宝橙 */
+  --primary-color: #ff5000;
+  --primary-dark: #e04900;
+  --primary-light: #ff8540;
+  --primary-bg: rgba(255, 80, 0, 0.06);
+
+  /* 辅助色 */
+  --price-color: #ff5000;
+  --price-bg: #fff3ed;
+
+  /* 语义色 */
+  --success-color: #00b262;
+  --warning-color: #ff8c00;
+  --danger-color: #ff3b30;
+  --info-color: #999;
+  --gold-color: #d4a84b;
+  --link-color: #3c6ef0;
+
+  /* 字体层级 */
+  --font-size-xs: 12px;
+  --font-size-sm: 13px;
+  --font-size-base: 14px;
+  --font-size-md: 15px;
+  --font-size-lg: 16px;
+  --font-size-xl: 18px;
+  --font-size-xxl: 20px;
+  --font-size-h3: 22px;
+  --font-size-h2: 26px;
+  --font-size-h1: 32px;
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* 间距 scale — 淘宝适中风格 */
+  --spacing-xxs: 4px;
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 20px;
+  --spacing-xl: 24px;
+  --spacing-xxl: 32px;
+  --spacing-xxxl: 48px;
+
+  /* 圆角 — 淘宝偏圆 */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* z-index */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-overlay: 1030;
+  --z-modal: 1050;
+  --z-toast: 1100;
+
+  /* 动画 */
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --duration-fast: 0.15s;
+  --duration-normal: 0.25s;
+  --duration-slow: 0.4s;
+}
+
+/* ===== 浅色主题 ===== */
+[data-theme="light"],
+:root {
+  --bg-page: #f5f5f5;
+  --bg-white: #ffffff;
+  --bg-card: #ffffff;
+  --bg-hover: #f7f7f7;
+  --bg-active: #f0f0f0;
+  --bg-overlay: rgba(0, 0, 0, 0.4);
+
+  --text-primary: #3c3c3c;
+  --text-secondary: #6c6c6c;
+  --text-light: #9c9c9c;
+  --text-placeholder: #cccccc;
+  --text-inverse: #ffffff;
+
+  --border-color: #e8e8e8;
+  --border-light: #f2f2f2;
+
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 8px 32px rgba(0, 0, 0, 0.1);
+
+  --skeleton-bg: #f0f0f0;
+  --skeleton-shine: #e0e0e0;
+}
+
+/* ===== 深色主题 ===== */
+[data-theme="dark"] {
+  --bg-page: #1a1a1a;
+  --bg-white: #242424;
+  --bg-card: #2a2a2a;
+  --bg-hover: #303030;
+  --bg-active: #383838;
+  --bg-overlay: rgba(0, 0, 0, 0.7);
+
+  --text-primary: #e8e8e8;
+  --text-secondary: #a8a8a8;
+  --text-light: #707070;
+  --text-placeholder: #505050;
+  --text-inverse: #1a1a1a;
+
+  --border-color: #3a3a3a;
+  --border-light: #2e2e2e;
+
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 2px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 8px 32px rgba(0, 0, 0, 0.5);
+
+  --skeleton-bg: #303030;
+  --skeleton-shine: #3d3d3d;
+
+  --primary-color: #ff6b33;
+  --primary-dark: #e05522;
+  --primary-light: #ff8c66;
+  --price-color: #ff6b33;
+  --primary-bg: rgba(255, 107, 51, 0.1);
+  --price-bg: rgba(255, 107, 51, 0.1);
+}
