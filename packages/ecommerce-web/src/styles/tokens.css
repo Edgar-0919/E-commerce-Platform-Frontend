@@ -1,0 +1,141 @@
+/* ============================================
+   设计 Token 系统 — Modern Warm Minimalism
+   ============================================ */
+
+:root {
+  /* 品牌色 — 深炭黑 + 香槟金 */
+  --primary-color: #2C2C2C;
+  --primary-dark: #1A1A1A;
+  --primary-light: #555555;
+  --primary-bg: rgba(201, 169, 110, 0.08);
+  --accent-color: #C9A96E;
+  --accent-dark: #B8944E;
+  --accent-light: #E0CC9E;
+
+  /* 辅助色 */
+  --price-color: #C9A96E;
+  --price-bg: rgba(201, 169, 110, 0.06);
+
+  /* 语义色 */
+  --success-color: #5B8C5A;
+  --warning-color: #D4A853;
+  --danger-color: #C5554A;
+  --info-color: #888;
+  --gold-color: #C9A96E;
+  --link-color: #555;
+
+  /* 字体层级 */
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-base: 15px;
+  --font-size-md: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-xxl: 24px;
+  --font-size-h3: 22px;
+  --font-size-h2: 28px;
+  --font-size-h1: 36px;
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* 间距 scale */
+  --spacing-xxs: 4px;
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 40px;
+  --spacing-xxxl: 56px;
+
+  /* 圆角 */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* z-index */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-overlay: 1030;
+  --z-modal: 1050;
+  --z-toast: 1100;
+
+  /* 动画 */
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --duration-fast: 0.15s;
+  --duration-normal: 0.25s;
+  --duration-slow: 0.4s;
+}
+
+/* ===== 浅色主题 ===== */
+[data-theme="light"],
+:root {
+  --bg-page: #FAFAF8;
+  --bg-white: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-hover: #F5F5F2;
+  --bg-active: #EEEEEA;
+  --bg-overlay: rgba(30, 30, 30, 0.35);
+
+  --text-primary: #2C2C2C;
+  --text-secondary: #6B6B6B;
+  --text-light: #999999;
+  --text-placeholder: #BBBBBB;
+  --text-inverse: #FFFFFF;
+
+  --border-color: #EBEBEB;
+  --border-light: #F3F3F3;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 20px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 4px 28px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 8px 40px rgba(0, 0, 0, 0.10);
+
+  --skeleton-bg: #EFEFEB;
+  --skeleton-shine: #E0E0DA;
+}
+
+/* ===== 深色主题 ===== */
+[data-theme="dark"] {
+  --bg-page: #1C1C1C;
+  --bg-white: #262626;
+  --bg-card: #2A2A2A;
+  --bg-hover: #303030;
+  --bg-active: #383838;
+  --bg-overlay: rgba(0, 0, 0, 0.7);
+
+  --text-primary: #E8E8E6;
+  --text-secondary: #A0A0A0;
+  --text-light: #686868;
+  --text-placeholder: #505050;
+  --text-inverse: #1C1C1C;
+
+  --border-color: #3A3A3A;
+  --border-light: #2E2E2E;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 2px 20px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 28px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 8px 40px rgba(0, 0, 0, 0.6);
+
+  --skeleton-bg: #303030;
+  --skeleton-shine: #3D3D3D;
+
+  --accent-color: #D4B87A;
+  --accent-dark: #C9A96E;
+  --accent-light: #E5CF9F;
+  --price-color: #D4B87A;
+  --primary-bg: rgba(212, 184, 122, 0.08);
+  --price-bg: rgba(212, 184, 122, 0.1);
+}

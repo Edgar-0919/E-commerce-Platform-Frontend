@@ -1,22 +1,18 @@
 {
-  "name": "ecommerce-frontend",
-  "version": "1.0.0",
-  "type": "module",
+  "name": "ecommerce-frontend-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/ecommerce-admin",
+    "packages/ecommerce-web"
+  ],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "vue": "^3.4.0",
-    "vue-router": "^4.3.0",
-    "pinia": "^2.1.0",
-    "axios": "^1.7.0",
-    "element-plus": "^2.7.0",
-    "@element-plus/icons-vue": "^2.3.0"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-vue": "^5.0.0",
-    "vite": "^5.2.0"
+    "dev:admin": "npm run dev --workspace ecommerce-admin",
+    "dev:web": "npm run dev --workspace ecommerce-web",
+    "build:admin": "npm run build --workspace ecommerce-admin",
+    "build:web": "npm run build --workspace ecommerce-web",
+    "preview:admin": "npm run preview --workspace ecommerce-admin",
+    "preview:web": "npm run preview --workspace ecommerce-web",
+    "lint": "npm run lint --workspaces",
+    "test": "npm run test --workspaces"
   }
 }
