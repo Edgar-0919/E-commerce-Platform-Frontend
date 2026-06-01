@@ -199,7 +199,7 @@ function checkout() {
     ElMessage.warning('请选择商品')
     return
   }
-  router.push('/order')
+  router.push('/checkout')
 }
 
 function goToHome() {

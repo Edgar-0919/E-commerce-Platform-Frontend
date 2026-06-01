@@ -176,7 +176,7 @@ function goToOrders() {
 }
 
 function goToAddress() {
-  ElMessage.info('收货地址功能开发中')
+  router.push('/address')
 }
 
 async function handleLogout() {
@@ -454,7 +454,7 @@ onMounted(() => {
 
 .menu-arrow {
   color: var(--text-placeholder);
-  font-size: var(--font-size-xs);
+  font-size: 5px;
   flex-shrink: 0;
 }
 

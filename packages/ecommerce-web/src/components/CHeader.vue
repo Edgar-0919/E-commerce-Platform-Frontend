@@ -11,6 +11,9 @@
         <div class="nav-links">
           <a class="nav-link" :class="{ active: isActive('/home') }" @click="goTo('/home')">首页</a>
           <a class="nav-link" :class="{ active: isActive('/search') }" @click="goTo('/search')">探索</a>
+          <a class="nav-link cat-trigger-link" @mouseenter="showCategoryDropdown = true">
+            分类 <span class="arrow" :class="{ open: showCategoryDropdown }">▾</span>
+          </a>
         </div>
 
         <!-- Category Dropdown -->
@@ -30,46 +33,63 @@
 
       <!-- Search -->
       <div class="search-area">
-        <div class="search-box">
+        <div class="search-box" ref="searchBoxRef">
           <input
             v-model="searchText"
             type="text"
             placeholder="搜索商品"
             class="search-input"
             @keyup.enter="handleSearch"
+            @input="handleSuggestInput"
+            @focus="handleSuggestInput"
+            @blur="hideSuggestDelay"
           />
           <button class="search-btn" @click="handleSearch" aria-label="搜索">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg class="icon icon-search" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
             </svg>
           </button>
+        </div>
+        <!-- 搜索建议下拉 -->
+        <div v-if="showSuggestions && suggestions.length > 0" class="suggest-dropdown">
+          <div
+            v-for="(text, idx) in suggestions"
+            :key="idx"
+            class="suggest-item"
+            @mousedown.prevent="selectSuggest(text)"
+          >
+            <svg class="icon icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <span class="suggest-text">{{ text }}</span>
+          </div>
         </div>
       </div>
 
       <!-- Right Actions -->
       <div class="actions-area">
         <button class="icon-btn" @click="toggleTheme" :aria-label="themeStore.currentTheme === 'dark' ? '切换到浅色模式' : '切换到深色模式'">
-          <svg v-if="themeStore.currentTheme === 'dark'" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-          <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg v-if="themeStore.currentTheme === 'dark'" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+          <svg v-else class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         </button>
         <button class="icon-btn" @click="goTo('/user')" v-if="userStore.token" :aria-label="'个人中心'">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </button>
         <button class="icon-btn" @click="handleLogout" v-if="userStore.token" :aria-label="'退出登录'">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
         </button>
         <button class="icon-btn" @click="goTo('/login')" v-else :aria-label="'登录'">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </button>
         <button class="icon-btn cart-btn" @click="goTo('/cart')" :aria-label="'购物车'">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
           <span v-if="cartCount > 0" class="cart-badge">{{ cartCount > 99 ? '99+' : cartCount }}</span>
         </button>
       </div>
 
       <!-- Mobile Toggle -->
       <button class="mobile-toggle" @click="showMobileMenu = !showMobileMenu" :aria-label="'菜单'">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <svg class="icon icon-lg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <template v-if="!showMobileMenu">
               <line x1="3" y1="6" x2="21" y2="6"/>
               <line x1="3" y1="12" x2="21" y2="12"/>
@@ -115,6 +135,7 @@ import { useUserStore } from '@/store/user'
 import { useThemeStore } from '@/store/theme'
 import { getCartList } from '@/api/cart'
 import { getCategoryTree } from '@/api/product'
+import { searchSuggest } from '@/api/search'
 
 const router = useRouter()
 const route = useRoute()
@@ -125,6 +146,10 @@ const cartCount = ref(0)
 const showMobileMenu = ref(false)
 const showCategoryDropdown = ref(false)
 const categories = ref([])
+// 搜索建议
+const suggestions = ref([])
+const showSuggestions = ref(false)
+let suggestTimer = null
 
 function isActive(path) {
   return route.path === path || route.path.startsWith(path + '/')
@@ -137,11 +162,47 @@ function goTo(path) {
 }
 
 function handleSearch() {
+  showSuggestions.value = false
   const keyword = searchText.value.trim()
   if (keyword) {
     showMobileMenu.value = false
     router.push(`/search?keyword=${encodeURIComponent(keyword)}`)
   }
+}
+
+// 搜索建议输入处理（防抖）
+function handleSuggestInput() {
+  clearTimeout(suggestTimer)
+  const kw = searchText.value.trim()
+  if (kw.length < 2) {
+    suggestions.value = []
+    showSuggestions.value = false
+    return
+  }
+  suggestTimer = setTimeout(async () => {
+    try {
+      const result = await searchSuggest(kw)
+      suggestions.value = Array.isArray(result) ? result : []
+      showSuggestions.value = suggestions.value.length > 0
+    } catch {
+      suggestions.value = []
+      showSuggestions.value = false
+    }
+  }, 300)
+}
+
+// 点击建议项
+function selectSuggest(text) {
+  searchText.value = text
+  showSuggestions.value = false
+  router.push(`/search?keyword=${encodeURIComponent(text)}`)
+}
+
+// 延迟隐藏建议（给点击建议项留时间）
+function hideSuggestDelay() {
+  setTimeout(() => {
+    showSuggestions.value = false
+  }, 200)
 }
 
 function toggleTheme() {
@@ -184,6 +245,12 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* ===== SVG 图标尺寸规范 ===== */
+.icon { width: 20px; height: 20px; flex-shrink: 0; }
+.icon-sm { width: 14px; height: 14px; }
+.icon-lg { width: 24px; height: 24px; }
+.icon-search { width: 18px; height: 18px; }
+
 .c-header {
   position: sticky;
   top: 0;
@@ -223,21 +290,10 @@ onMounted(() => {
   position: relative;
 }
 
-.cat-trigger {
-  background: none;
-  border: none;
-  font-size: var(--font-size-base);
-  color: var(--text-secondary);
+.cat-trigger-link {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 0;
-  cursor: pointer;
-  transition: color var(--duration-fast);
-}
-
-.cat-trigger:hover {
-  color: var(--text-primary);
+  gap: 2px;
 }
 
 .arrow {
@@ -323,6 +379,7 @@ onMounted(() => {
 .search-area {
   flex: 1;
   max-width: 420px;
+  position: relative;
 }
 
 .search-box {
@@ -369,6 +426,45 @@ onMounted(() => {
 }
 
 .search-btn:hover {
+  color: var(--text-primary);
+}
+
+/* 搜索建议下拉 */
+.suggest-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  margin-top: 4px;
+  z-index: var(--z-dropdown);
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.suggest-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background var(--duration-fast);
+}
+
+.suggest-item:hover {
+  background: var(--bg-hover);
+}
+
+.suggest-icon {
+  color: var(--text-placeholder);
+  flex-shrink: 0;
+}
+
+.suggest-text {
+  font-size: var(--font-size-sm);
   color: var(--text-primary);
 }
 

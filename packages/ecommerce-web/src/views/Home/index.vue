@@ -8,6 +8,7 @@
             :key="index"
             class="hero-slide"
             :class="{ active: currentSlide === index }"
+            @click="handleBannerClick(item)"
           >
             <img :src="item.image" :alt="item.title" />
           </div>
@@ -57,33 +58,6 @@
       </div>
     </div>
 
-    <div class="haohuo-section">
-      <div class="haohuo-header">
-        <h2 class="haohuo-title">有好货</h2>
-        <p class="haohuo-subtitle">甄选好物 · 品质生活</p>
-      </div>
-      <div class="haohuo-list">
-        <div
-          v-for="item in haohuoProducts"
-          :key="item.id"
-          class="haohuo-card"
-          @click="goToProduct(item.id)"
-        >
-          <div class="haohuo-img-wrap">
-            <LazyImage :src="item.image" :alt="item.name" class="haohuo-img" />
-          </div>
-          <div class="haohuo-info">
-            <h4 class="haohuo-name">{{ item.name }}</h4>
-            <p class="haohuo-desc">{{ item.description }}</p>
-            <div class="haohuo-price">
-              <span class="haohuo-symbol">¥</span>
-              <span class="haohuo-value">{{ item.price }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <ErrorState v-if="error" @retry="loadProducts" />
 
     <template v-else>
@@ -121,14 +95,19 @@ import EmptyState from '@/components/common/EmptyState.vue'
 import ErrorState from '@/components/common/ErrorState.vue'
 import LazyImage from '@/components/common/LazyImage.vue'
 import { getProductPage } from '@/api/product'
-import { useUserStore } from '@/store/user'
-import { User } from '@element-plus/icons-vue'
-import { carouselItems } from '@/views/mock/home'
+import { getBanners } from '@/api/marketing'
 
+// 默认轮播图（API失败时使用）
+const defaultCarouselItems = [
+  {
+    image: 'https://placehold.co/1200x400/3498db/ffffff?text=精选好物',
+    title: '精选好物',
+    desc: '品质生活，从这里开始'
+  }
+]
+
+const carouselItems = ref([...defaultCarouselItems])
 const router = useRouter()
-const userStore = useUserStore()
-const isLoggedIn = computed(() => !!userStore.token)
-const userInfo = computed(() => userStore.userInfo)
 
 const currentSlide = ref(0)
 const products = ref([])
@@ -140,20 +119,14 @@ let carouselTimer = null
 const countdown = reactive({ hours: '00', minutes: '00', seconds: '00' })
 let countdownTimer = null
 
+// TODO: 秒杀商品应从 marketing-service 的 /api/marketing/promotion?type=SECKILL 接口动态加载
+// 当前硬编码为占位数据，实际上线前需替换为 API 调用
 const seckillProducts = [
-  { id: 101, name: '蓝牙耳机', price: 99, originalPrice: 299, image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=wireless%20earbuds%20white%20background%20product%20photo&image_size=square_hd' },
-  { id: 102, name: '智能手表', price: 199, originalPrice: 599, image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=smart%20watch%20white%20background%20product%20photo&image_size=square_hd' },
-  { id: 103, name: '充电宝', price: 49, originalPrice: 149, image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=power%20bank%20white%20background%20product%20photo&image_size=square_hd' },
-  { id: 104, name: '机械键盘', price: 129, originalPrice: 399, image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=mechanical%20keyboard%20white%20background%20product%20photo&image_size=square_hd' },
-  { id: 105, name: '运动鞋', price: 159, originalPrice: 459, image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=running%20shoes%20white%20background%20product%20photo&image_size=square_hd' }
-]
-
-const haohuoProducts = [
-  { id: 301, name: '极简陶瓷花瓶三件套', description: '北欧设计，手工拉胚', price: 168, image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=minimal%20ceramic%20vase%20set%20nordic%20design%20product%20photo%20white%20background&image_size=square_hd' },
-  { id: 302, name: '复古机械键盘青轴', description: '打字机手感，PBT键帽', price: 349, image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=retro%20mechanical%20keyboard%20vintage%20style%20product%20photo%20white%20background&image_size=square_hd' },
-  { id: 303, name: '天然乳胶护颈枕', description: '泰国进口，透气防螨', price: 239, image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=natural%20latex%20pillow%20ergonomic%20product%20photo%20white%20background&image_size=square_hd' },
-  { id: 304, name: '便携式挂烫机', description: '三秒出汽，除皱杀菌', price: 129, image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=portable%20garment%20steamer%20handheld%20product%20photo%20white%20background&image_size=square_hd' },
-  { id: 305, name: '日式锤纹玻璃茶具套装', description: '手工吹制，一壶四杯', price: 198, image: 'https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=japanese%20style%20glass%20tea%20set%20hammered%20texture%20product%20photo%20white%20background&image_size=square_hd' }
+  { id: 101, name: '蓝牙耳机', price: 99, originalPrice: 299, image: 'https://placehold.co/200x200/2c3e50/ffffff?text=蓝牙耳机' },
+  { id: 102, name: '智能手表', price: 199, originalPrice: 599, image: 'https://placehold.co/200x200/27ae60/ffffff?text=智能手表' },
+  { id: 103, name: '充电宝', price: 49, originalPrice: 149, image: 'https://placehold.co/200x200/e67e22/ffffff?text=充电宝' },
+  { id: 104, name: '机械键盘', price: 129, originalPrice: 399, image: 'https://placehold.co/200x200/8e44ad/ffffff?text=机械键盘' },
+  { id: 105, name: '运动鞋', price: 159, originalPrice: 459, image: 'https://placehold.co/200x200/c0392b/ffffff?text=运动鞋' }
 ]
 
 const productSections = computed(() => {
@@ -182,11 +155,15 @@ function updateCountdown() {
 }
 
 function prevSlide() {
-  currentSlide.value = currentSlide.value === 0 ? carouselItems.length - 1 : currentSlide.value - 1
+  const len = carouselItems.value.length
+  if (len <= 1) return
+  currentSlide.value = currentSlide.value === 0 ? len - 1 : currentSlide.value - 1
 }
 
 function nextSlide() {
-  currentSlide.value = currentSlide.value === carouselItems.length - 1 ? 0 : currentSlide.value + 1
+  const len = carouselItems.value.length
+  if (len <= 1) return
+  currentSlide.value = currentSlide.value === len - 1 ? 0 : currentSlide.value + 1
 }
 
 function goTo(path) {
@@ -203,6 +180,12 @@ function goToCategory(category) {
 
 function handleSearch(keyword) {
   router.push(`/search?keyword=${keyword}`)
+}
+
+function handleBannerClick(item) {
+  if (item.linkUrl) {
+    router.push(item.linkUrl)
+  }
 }
 
 function refreshSection() {
@@ -222,8 +205,25 @@ async function loadProducts() {
   }
 }
 
+async function loadBanners() {
+  try {
+    const result = await getBanners('home')
+    if (Array.isArray(result) && result.length > 0) {
+      carouselItems.value = result.map(item => ({
+        image: item.image,
+        title: item.title || '',
+        desc: item.description || '',
+        linkUrl: item.linkUrl
+      }))
+    }
+  } catch (e) {
+    console.warn('加载轮播图失败，使用默认数据:', e)
+  }
+}
+
 onMounted(() => {
   loadProducts()
+  loadBanners()
   carouselTimer = setInterval(() => { nextSlide() }, 5000)
   updateCountdown()
   countdownTimer = setInterval(updateCountdown, 1000)
@@ -536,110 +536,6 @@ onUnmounted(() => {
   text-decoration: line-through;
 }
 
-.haohuo-section {
-  background: var(--bg-white);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-lg);
-  margin-bottom: var(--spacing-sm);
-}
-
-.haohuo-header {
-  text-align: center;
-  margin-bottom: var(--spacing-lg);
-}
-
-.haohuo-title {
-  font-size: var(--font-size-h3);
-  font-weight: var(--font-weight-bold);
-  color: var(--text-primary);
-  margin-bottom: 6px;
-}
-
-.haohuo-subtitle {
-  font-size: var(--font-size-sm);
-  color: var(--text-light);
-}
-
-.haohuo-list {
-  display: flex;
-  gap: var(--spacing-sm);
-}
-
-.haohuo-card {
-  flex: 1;
-  cursor: pointer;
-  background: var(--bg-page);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  transition: transform var(--duration-fast), box-shadow var(--duration-fast);
-}
-
-.haohuo-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
-}
-
-.haohuo-img-wrap {
-  width: 100%;
-  aspect-ratio: 1;
-  overflow: hidden;
-}
-
-.haohuo-img {
-  width: 100%;
-  height: 100%;
-}
-
-.haohuo-img :deep(img) {
-  object-fit: cover;
-  transition: transform var(--duration-slow);
-}
-
-.haohuo-card:hover .haohuo-img :deep(img) {
-  transform: scale(1.05);
-}
-
-.haohuo-info {
-  padding: var(--spacing-sm);
-}
-
-.haohuo-name {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-medium);
-  color: var(--text-primary);
-  margin-bottom: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.haohuo-desc {
-  font-size: var(--font-size-xs);
-  color: var(--text-light);
-  margin-bottom: 8px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.haohuo-price {
-  display: flex;
-  align-items: baseline;
-}
-
-.haohuo-symbol {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  color: var(--primary-color);
-}
-
-.haohuo-value {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-bold);
-  color: var(--primary-color);
-  line-height: 1;
-}
-
 .product-section {
   margin-bottom: var(--spacing-sm);
 }
@@ -722,15 +618,6 @@ onUnmounted(() => {
     border-radius: var(--radius-lg);
   }
 
-  .haohuo-list {
-    flex-wrap: wrap;
-  }
-
-  .haohuo-card {
-    flex: none;
-    width: calc(33.33% - 8px);
-  }
-
   .product-grid {
     grid-template-columns: repeat(3, 1fr);
   }
@@ -787,10 +674,6 @@ onUnmounted(() => {
     height: 80px;
   }
 
-  .haohuo-card {
-    width: calc(50% - 4px);
-  }
-
   .product-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -807,10 +690,6 @@ onUnmounted(() => {
 
   .seckill-item {
     width: 50%;
-  }
-
-  .haohuo-card {
-    width: 100%;
   }
 
   .product-grid {

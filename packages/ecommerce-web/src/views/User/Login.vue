@@ -62,13 +62,14 @@
 
 <script setup>
 import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { User, Lock, View, Hide } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/user'
 import { login } from '@/api/user'
 import { ElMessage } from 'element-plus'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 const loading = ref(false)
 const showPassword = ref(false)
@@ -106,7 +107,9 @@ async function handleLogin() {
       userStore.setToken(result.token)
       await userStore.fetchUserInfo()
       ElMessage.success('登录成功')
-      router.push('/home')
+      // 存在 redirect 参数则回跳，否则去首页
+      const redirect = route.query.redirect || '/home'
+      router.push(redirect)
     }
   } catch (e) {
     errors.password = '用户名或密码错误'

@@ -55,6 +55,12 @@ const routes = [
     meta: { title: '确认订单', requiresAuth: true }
   },
   {
+    path: '/payment',
+    name: 'Payment',
+    component: () => import('@/views/Order/Payment.vue'),
+    meta: { title: '支付', requiresAuth: true }
+  },
+  {
     path: '/payment/result',
     name: 'PaymentResult',
     component: () => import('@/views/Order/PaymentResult.vue'),
@@ -65,6 +71,12 @@ const routes = [
     name: 'UserCenter',
     component: () => import('@/views/User/UserCenter.vue'),
     meta: { title: '个人中心', requiresAuth: true }
+  },
+  {
+    path: '/address',
+    name: 'Address',
+    component: () => import('@/views/User/Address.vue'),
+    meta: { title: '收货地址', requiresAuth: true }
   },
   {
     path: '/user/coupons',

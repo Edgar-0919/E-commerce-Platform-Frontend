@@ -5,7 +5,7 @@
         <div class="footer-grid">
           <div class="footer-col brand-col">
             <span class="brand-text">小羊电商</span>
-            <p class="brand-desc">生活方式的质感到达</p>
+            <p class="brand-desc">咩咩咩-咩咩咩-咩咩</p>
           </div>
           <div class="footer-col" v-for="col in linkColumns" :key="col.title">
             <h4>{{ col.title }}</h4>
@@ -46,7 +46,7 @@ const currentYear = new Date().getFullYear()
 const linkColumns = [
   {
     title: '购物指南',
-    links: ['购物流程', '会员介绍', '常见问题', '联系客服']
+    links: [ '会员介绍', '常见问题', '联系客服']
   },
   {
     title: '配送方式',

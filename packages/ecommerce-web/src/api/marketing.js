@@ -45,3 +45,12 @@ export function getMyPoints() {
 export function getPromotions(type) {
   return request.get(`/marketing/promotion/${type}`)
 }
+
+/**
+ * 获取轮播图列表
+ * @param {string} [position] - 位置标识，默认 'home'
+ * @returns {Promise<Array>}
+ */
+export function getBanners(position = 'home') {
+  return request.get('/marketing/banner', { params: { position } })
+}

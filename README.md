@@ -1,6 +1,7 @@
 # 小羊电商 — 前端
 
 基于 Vue 3 + Vite + Element Plus + Pinia 的电商平台前端项目，npm workspace monorepo 架构。
+后端仓库：[backend](https://github.com/Edgar-0919/E-commerce-Platform-Backend)
 
 ## 技术栈
 

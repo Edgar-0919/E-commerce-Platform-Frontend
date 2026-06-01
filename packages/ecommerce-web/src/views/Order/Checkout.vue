@@ -200,7 +200,8 @@ async function submitOrder() {
       remark: remark.value || undefined
     }
     const order = await createOrder(orderData)
-    router.push(`/payment/result?orderNo=${order.orderNo}`)
+    // 将 orderId 一并传递，支付接口需要 orderId 参数创建支付单据
+    router.push(`/payment?orderNo=${order.orderNo}&amount=${payAmount.value}&orderId=${order.id}`)
   } catch (e) {
     ElMessage.error(e.message || '提交订单失败')
   } finally {

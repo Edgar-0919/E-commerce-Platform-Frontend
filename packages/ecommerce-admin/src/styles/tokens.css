@@ -24,17 +24,17 @@
   --gold-color: #C9A96E;
   --link-color: #555;
 
-  /* 字体层级 */
-  --font-size-xs: 11px;
-  --font-size-sm: 13px;
-  --font-size-base: 15px;
-  --font-size-md: 16px;
-  --font-size-lg: 18px;
-  --font-size-xl: 20px;
-  --font-size-xxl: 24px;
-  --font-size-h3: 22px;
-  --font-size-h2: 28px;
-  --font-size-h1: 36px;
+  /* 字体层级 — 使用 clamp() 实现流式响应缩放 */
+  --font-size-xs: clamp(10px, 1.5vw, 11px);
+  --font-size-sm: clamp(12px, 1.7vw, 13px);
+  --font-size-base: clamp(14px, 2vw, 15px);
+  --font-size-md: clamp(15px, 2.2vw, 16px);
+  --font-size-lg: clamp(16px, 2.5vw, 18px);
+  --font-size-xl: clamp(18px, 3vw, 20px);
+  --font-size-xxl: clamp(20px, 3.5vw, 24px);
+  --font-size-h3: clamp(20px, 3vw, 22px);
+  --font-size-h2: clamp(24px, 4vw, 28px);
+  --font-size-h1: clamp(28px, 5vw, 36px);
 
   --font-weight-normal: 400;
   --font-weight-medium: 500;

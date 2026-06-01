@@ -127,6 +127,7 @@ import { ShoppingCart, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import { getProductDetail } from '@/api/product'
 import { addToCart } from '@/api/cart'
 import { ElMessage } from 'element-plus'
+import { useUserStore } from '@/store/user'
 import LazyImage from '@/components/common/LazyImage.vue'
 import SkeletonLoader from '@/components/common/SkeletonLoader.vue'
 import ErrorState from '@/components/common/ErrorState.vue'
@@ -134,6 +135,7 @@ import BreadcrumbNav from '@/components/common/BreadcrumbNav.vue'
 
 const route = useRoute()
 const router = useRouter()
+const userStore = useUserStore()
 
 const loading = ref(true)
 const error = ref(false)
@@ -212,11 +214,17 @@ function increaseQty() {
 }
 
 async function handleAddToCart() {
+  // 未登录时跳转到登录页，登录成功后回跳当前商品详情
+  if (!userStore.token) {
+    ElMessage.warning('请先登录')
+    router.push({ path: '/login', query: { redirect: route.fullPath } })
+    return
+  }
   try {
     await addToCart({ skuId: selectedSkuId.value, quantity: quantity.value })
     ElMessage.success('已加入购物车')
   } catch (e) {
-    ElMessage.error('加入购物车失败')
+    // 响应拦截器已统一弹窗提示，此处仅阻止异常冒泡
   }
 }
 
