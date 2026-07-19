@@ -1,5 +1,4 @@
 <template>
-  <!-- 商品卡片骨架 -->
   <div v-if="type === 'card'" class="skeleton-cards">
     <div v-for="i in count" :key="i" class="skeleton-card">
       <el-skeleton animated>
@@ -15,7 +14,6 @@
     </div>
   </div>
 
-  <!-- 列表骨架 -->
   <div v-else-if="type === 'list'" class="skeleton-list">
     <div v-for="i in count" :key="i" class="skeleton-row">
       <el-skeleton animated>
@@ -33,7 +31,6 @@
     </div>
   </div>
 
-  <!-- 详情骨架 -->
   <div v-else-if="type === 'detail'" class="skeleton-detail">
     <el-skeleton animated>
       <template #template>
@@ -50,7 +47,6 @@
     </el-skeleton>
   </div>
 
-  <!-- 文本骨架 -->
   <div v-else class="skeleton-text">
     <el-skeleton :rows="count" animated />
   </div>

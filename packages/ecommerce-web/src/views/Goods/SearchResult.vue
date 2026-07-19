@@ -1,11 +1,18 @@
 <template>
   <div class="search-page">
-    <!-- 头部：关键词 + 排序 -->
+    <!-- 头部：关键词 + 排序 + 价格筛选 -->
     <div class="search-header">
       <div class="keyword-row">
         <span class="keyword-prefix">搜索</span>
-        <span v-if="keyword" class="keyword-value">"{{ keyword }}"</span>
-        <span v-else class="keyword-value">全部商品</span>
+        <template v-if="keyword">
+          <span class="keyword-value">"{{ keyword }}"</span>
+        </template>
+        <template v-else-if="selectedCategoryName">
+          <span class="keyword-value">{{ selectedCategoryName }}</span>
+        </template>
+        <template v-else>
+          <span class="keyword-value">全部商品</span>
+        </template>
       </div>
       <div class="sort-row">
         <div class="sort-bar">
@@ -21,67 +28,29 @@
             <template v-if="sortBy === 'price_desc' && opt.key === 'price_desc'">↓</template>
           </span>
         </div>
+        <div class="price-filter">
+          <input
+            v-model="priceMin"
+            type="number"
+            placeholder="最低价"
+            class="price-input"
+            @keyup.enter="doSearch"
+          />
+          <span class="price-sep">-</span>
+          <input
+            v-model="priceMax"
+            type="number"
+            placeholder="最高价"
+            class="price-input"
+            @keyup.enter="doSearch"
+          />
+          <button class="price-submit" @click="doSearch">筛选</button>
+        </div>
         <span v-if="total > 0" class="results-count">共 {{ total }} 件商品</span>
       </div>
     </div>
 
     <div class="search-body">
-      <!-- 筛选侧栏 -->
-      <aside class="filter-sidebar">
-        <div class="filter-section">
-          <h4 class="filter-title">商品分类</h4>
-          <div
-            v-for="cat in filterCategories"
-            :key="cat.id"
-            class="filter-item"
-            :class="{ active: selectedCategoryId === String(cat.id) }"
-            @click="toggleCategory(cat.id)"
-          >
-            <span class="filter-label">类别 {{ cat.id }}</span>
-            <span class="filter-count">({{ cat.count }})</span>
-          </div>
-          <div v-if="filterCategories.length === 0" class="filter-empty">暂无分类</div>
-        </div>
-
-        <div class="filter-section">
-          <h4 class="filter-title">品牌</h4>
-          <div
-            v-for="brand in filterBrands"
-            :key="brand.id"
-            class="filter-item"
-            :class="{ active: selectedBrandId === String(brand.id) }"
-            @click="toggleBrand(brand.id)"
-          >
-            <span class="filter-label">品牌 {{ brand.id }}</span>
-            <span class="filter-count">({{ brand.count }})</span>
-          </div>
-          <div v-if="filterBrands.length === 0" class="filter-empty">暂无品牌</div>
-        </div>
-
-        <div class="filter-section">
-          <h4 class="filter-title">价格区间</h4>
-          <div class="price-range">
-            <input
-              v-model="priceMin"
-              type="number"
-              placeholder="最低价"
-              class="price-input"
-              @change="doSearch"
-            />
-            <span class="price-sep">-</span>
-            <input
-              v-model="priceMax"
-              type="number"
-              placeholder="最高价"
-              class="price-input"
-              @change="doSearch"
-            />
-          </div>
-        </div>
-
-        <button v-if="hasActiveFilters" class="clear-filters-btn" @click="clearFilters">清除筛选</button>
-      </aside>
-
       <!-- 结果区 -->
       <div class="search-main">
         <SkeletonLoader v-if="loading" type="card" :count="8" />
@@ -129,12 +98,12 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { searchProducts, searchFilters } from '@/api/search'
-import { getProductPage } from '@/api/product'
+import { searchProducts } from '@/api/search'
+import { getCategoryTree } from '@/api/product'
 import ProductCard from '@/components/ProductCard.vue'
-import SkeletonLoader from '@/components/common/SkeletonLoader.vue'
-import ErrorState from '@/components/common/ErrorState.vue'
-import EmptyState from '@/components/common/EmptyState.vue'
+import { SkeletonLoader } from '@ecommerce/shared'
+import { ErrorState } from '@ecommerce/shared'
+import { EmptyState } from '@ecommerce/shared'
 
 const route = useRoute()
 
@@ -147,13 +116,11 @@ const sortBy = ref('default')
 const page = ref(1)
 const size = 20
 
-// 筛选条件
 const selectedCategoryId = ref(null)
-const selectedBrandId = ref(null)
 const priceMin = ref('')
 const priceMax = ref('')
-const filterCategories = ref([])
-const filterBrands = ref([])
+const categoryTree = ref([])
+const categoryMap = ref({})
 
 const sortOptions = [
   { key: 'default', label: '综合排序' },
@@ -163,11 +130,24 @@ const sortOptions = [
 ]
 
 const totalPages = computed(() => Math.ceil(total.value / size))
-const hasActiveFilters = computed(() =>
-  selectedCategoryId.value || selectedBrandId.value || priceMin.value || priceMax.value
-)
 
-// 显示页码（最多7个）
+const selectedCategoryName = computed(() => {
+  if (!selectedCategoryId.value) return ''
+  return categoryMap.value[selectedCategoryId.value] || ''
+})
+
+function buildCategoryMap(categories) {
+  const map = {}
+  function traverse(cats) {
+    cats.forEach(cat => {
+      map[cat.id] = cat.name
+      if (cat.children) traverse(cat.children)
+    })
+  }
+  traverse(categories)
+  return map
+}
+
 const visiblePages = computed(() => {
   const tp = totalPages.value
   if (tp <= 7) return Array.from({ length: tp }, (_, i) => i + 1)
@@ -192,33 +172,11 @@ const visiblePages = computed(() => {
   return pages
 })
 
-function toggleCategory(id) {
-  selectedCategoryId.value = selectedCategoryId.value === String(id) ? null : String(id)
-  page.value = 1
-  doSearch()
-}
-
-function toggleBrand(id) {
-  selectedBrandId.value = selectedBrandId.value === String(id) ? null : String(id)
-  page.value = 1
-  doSearch()
-}
-
-function clearFilters() {
-  selectedCategoryId.value = null
-  selectedBrandId.value = null
-  priceMin.value = ''
-  priceMax.value = ''
-  page.value = 1
-  doSearch()
-}
-
 async function doSearch() {
   loading.value = true
   error.value = false
   keyword.value = route.query.keyword || ''
 
-  // 处理从 header 分类导航传来的 categoryId
   if (route.query.categoryId && !selectedCategoryId.value) {
     selectedCategoryId.value = route.query.categoryId
   }
@@ -227,17 +185,11 @@ async function doSearch() {
     const params = {
       keyword: keyword.value,
       page: page.value,
-      size: size
-    }
-    // 排序参数：传给后端的 sortField 使用复合格式
-    if (sortBy.value !== 'default') {
-      params.sortField = sortBy.value
+      size: size,
+      sortBy: sortBy.value === 'default' ? undefined : sortBy.value
     }
     if (selectedCategoryId.value) {
       params.categoryId = selectedCategoryId.value
-    }
-    if (selectedBrandId.value) {
-      params.brandId = selectedBrandId.value
     }
     if (priceMin.value) {
       params.minPrice = priceMin.value
@@ -247,7 +199,6 @@ async function doSearch() {
     }
 
     const result = await searchProducts(params)
-    // 后端返回 { records: [...], total: N }
     if (result && result.records) {
       results.value = result.records
       total.value = result.total || result.records.length
@@ -258,44 +209,32 @@ async function doSearch() {
       results.value = []
       total.value = 0
     }
-
-    // 加载筛选聚合数据
-    loadFilters()
   } catch (e) {
-    // ES 不可用时降级到商品列表接口
-    try {
-      const fallback = await getProductPage({ page: page.value, size: size, keyword: keyword.value })
-      results.value = fallback.records || fallback.list || []
-      total.value = fallback.total || results.value.length
-    } catch {
-      results.value = []
-      total.value = 0
-    }
+    error.value = true
+    results.value = []
+    total.value = 0
   } finally {
     loading.value = false
   }
 }
 
-async function loadFilters() {
+async function loadCategoryTree() {
   try {
-    const filters = await searchFilters(keyword.value)
-    if (filters) {
-      filterCategories.value = filters.categories || []
-      filterBrands.value = filters.brands || []
-    }
+    categoryTree.value = await getCategoryTree()
+    categoryMap.value = buildCategoryMap(categoryTree.value)
   } catch {
-    // 筛选条件加载失败不影响主流程
+    // 分类树加载失败不影响主流程
   }
 }
 
-// 监听路由 query 变化重新搜索
 watch(() => [route.query.keyword, route.query.categoryId], () => {
   page.value = 1
   selectedCategoryId.value = route.query.categoryId || null
   doSearch()
 })
 
-onMounted(() => {
+onMounted(async () => {
+  await loadCategoryTree()
   doSearch()
 })
 </script>
@@ -333,6 +272,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 16px;
 }
 
 .sort-bar {
@@ -362,85 +302,14 @@ onMounted(() => {
   font-weight: var(--font-weight-semibold);
 }
 
-.results-count {
-  font-size: 12px;
-  color: var(--text-light);
-}
-
-/* 主体：侧栏 + 结果 */
-.search-body {
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
-}
-
-/* 筛选侧栏 */
-.filter-sidebar {
-  width: 220px;
-  flex-shrink: 0;
-  background: var(--bg-card);
-  border-radius: var(--radius-lg);
-  padding: 16px;
-  position: sticky;
-  top: 80px;
-}
-
-.filter-section {
-  margin-bottom: 20px;
-}
-
-.filter-title {
-  font-size: 14px;
-  font-weight: var(--font-weight-semibold);
-  color: var(--text-primary);
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.filter-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 8px;
-  font-size: 13px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  transition: all var(--duration-fast);
-}
-
-.filter-item:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-}
-
-.filter-item.active {
-  color: var(--price-color);
-  background: var(--price-bg);
-  font-weight: var(--font-weight-medium);
-}
-
-.filter-count {
-  font-size: 11px;
-  color: var(--text-placeholder);
-}
-
-.filter-empty {
-  font-size: 12px;
-  color: var(--text-placeholder);
-  padding: 4px 8px;
-}
-
-.price-range {
+.price-filter {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
 .price-input {
-  flex: 1;
-  width: 0;
+  width: 80px;
   height: 32px;
   padding: 0 8px;
   border: 1px solid var(--border-color);
@@ -460,24 +329,32 @@ onMounted(() => {
   font-size: 12px;
 }
 
-.clear-filters-btn {
-  width: 100%;
-  padding: 8px 0;
-  border: 1px solid var(--border-color);
-  background: var(--bg-page);
-  color: var(--text-secondary);
-  font-size: 13px;
+.price-submit {
+  padding: 6px 16px;
+  border: none;
+  background: var(--price-color);
+  color: #fff;
+  font-size: 12px;
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all var(--duration-fast);
 }
 
-.clear-filters-btn:hover {
-  border-color: var(--text-primary);
-  color: var(--text-primary);
+.price-submit:hover {
+  opacity: 0.9;
 }
 
-/* 搜索结果区 */
+.results-count {
+  font-size: 12px;
+  color: var(--text-light);
+}
+
+.search-body {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
 .search-main {
   flex: 1;
   min-width: 0;

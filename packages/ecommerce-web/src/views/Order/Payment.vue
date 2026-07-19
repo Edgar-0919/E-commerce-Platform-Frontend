@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="payment-page">
     <BreadcrumbNav :items="[{ name: '购物车', path: '/cart' }, { name: '确认订单', path: '/checkout' }, { name: '支付' }]" />
 
@@ -145,8 +145,8 @@ import { ElMessage } from 'element-plus'
 import { createPayment, confirmPayment } from '@/api/payment'
 import { getMyCoupons } from '@/api/marketing'
 import { getOrderDetail } from '@/api/order'
-import BreadcrumbNav from '@/components/common/BreadcrumbNav.vue'
-import SkeletonLoader from '@/components/common/SkeletonLoader.vue'
+import { BreadcrumbNav } from '@ecommerce/shared'
+import { SkeletonLoader } from '@ecommerce/shared'
 
 const route = useRoute()
 const router = useRouter()
@@ -155,9 +155,9 @@ const loading = ref(true)
 const paying = ref(false)
 const showSuccessModal = ref(false)
 
-const orderNo = ref(route.query.orderNo || '')
-const orderId = ref(Number(route.query.orderId) || 0)
-const originalAmount = ref(Number(route.query.amount) || 0)
+const orderId = ref(route.params.orderId || '')
+const orderNo = ref('')
+const originalAmount = ref(0)
 const selectedMethod = ref('alipay')
 const selectedCoupon = ref(null)
 const availableCoupons = ref([])
@@ -199,10 +199,11 @@ async function init() {
   try {
     const [couponResult, orderResult] = await Promise.all([
       getMyCoupons(1).catch(() => []),
-      getOrderDetail(orderNo.value).catch(() => null)
+      getOrderDetail(orderId.value).catch(() => null)
     ])
     
     if (orderResult) {
+      orderNo.value = orderResult.orderNo
       orderCreateTime.value = orderResult.createTime
       productCount.value = orderResult.totalQuantity || orderResult.items?.length || 0
       if (orderResult.payAmount) {
@@ -253,7 +254,7 @@ function goHome() {
 }
 
 onMounted(() => {
-  if (!orderNo.value) {
+  if (!orderId.value || orderId.value === '0') {
     router.push('/cart')
     return
   }

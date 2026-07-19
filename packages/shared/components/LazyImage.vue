@@ -1,6 +1,6 @@
 <template>
   <el-image
-    :src="src"
+    :src="safeSrc"
     :alt="alt"
     :fit="fit"
     :lazy="lazy"
@@ -19,15 +19,22 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { Picture } from '@element-plus/icons-vue'
 
-defineProps({
+const props = defineProps({
   src: { type: String, default: '' },
   alt: { type: String, default: '' },
   fit: { type: String, default: 'cover' },
   lazy: { type: Boolean, default: true },
   width: { type: String, default: '100%' },
   height: { type: String, default: '100%' }
+})
+
+const safeSrc = computed(() => {
+  const s = props.src
+  if (!s || s.trim() === '') return ''
+  return s
 })
 </script>
 

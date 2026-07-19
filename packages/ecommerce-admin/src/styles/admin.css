@@ -4,6 +4,27 @@
    本文件仅包含 B 端特有的布局和组件样式
    ============================================ */
 
+/* ===== 隐藏浏览器右侧滚动条 ===== */
+html, body, #app {
+  overflow: hidden;
+  height: 100%;
+  margin: 0;
+}
+
+/* admin-main 内部滚动（视觉上不显示滚动条） */
+.admin-main {
+  height: calc(100vh - 60px);
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.admin-main::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 /* ===== 侧边栏菜单深度定制 ===== */
 .admin-sidebar .el-menu {
   --el-menu-bg-color: #212529;

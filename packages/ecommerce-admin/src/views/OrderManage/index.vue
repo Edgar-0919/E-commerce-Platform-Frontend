@@ -3,11 +3,13 @@
     <el-card shadow="never">
       <div class="filter-bar">
         <el-select v-model="filterStatus" placeholder="订单状态" style="width: 140px" clearable @change="handleFilter">
-          <el-option label="待付款" value="PENDING_PAYMENT" />
-          <el-option label="待发货" value="PENDING_SHIP" />
-          <el-option label="已发货" value="SHIPPED" />
-          <el-option label="已完成" value="COMPLETED" />
-          <el-option label="已取消" value="CANCELLED" />
+          <el-option label="待支付" :value="0" />
+          <el-option label="待发货" :value="1" />
+          <el-option label="已发货" :value="2" />
+          <el-option label="已收货" :value="3" />
+          <el-option label="已取消" :value="4" />
+          <el-option label="退款中" :value="5" />
+          <el-option label="已退款" :value="6" />
         </el-select>
         <el-date-picker
           v-model="filterDateRange"
@@ -39,9 +41,9 @@
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button size="small" type="primary" link @click="handleViewDetail(row)">详情</el-button>
-            <el-button v-if="row.status === 'PENDING_SHIP'" size="small" type="success" link @click="handleShip(row)">发货</el-button>
+            <el-button v-if="row.status === 1" size="small" type="success" link @click="handleShip(row)">发货</el-button>
             <el-button
-              v-if="row.status === 'PENDING_PAYMENT' || row.status === 'PENDING_SHIP'"
+              v-if="row.status === 0 || row.status === 1"
               size="small"
               type="danger"
               link
@@ -88,8 +90,8 @@
             <template #default="{ row }">¥{{ row.price }}</template>
           </el-table-column>
           <el-table-column prop="quantity" label="数量" width="80" />
-          <el-table-column prop="subtotal" label="小计" width="100">
-            <template #default="{ row }">¥{{ row.subtotal }}</template>
+          <el-table-column prop="amount" label="小计" width="100">
+            <template #default="{ row }">¥{{ row.amount }}</template>
           </el-table-column>
         </el-table>
       </template>
@@ -108,47 +110,55 @@ const filterStatus = ref('')
 const filterDateRange = ref(null)
 const filterOrderNo = ref('')
 const currentPage = ref(1)
-const pageSize = ref(10)
+const pageSize = ref(20)
 const total = ref(0)
 
 const detailDialogVisible = ref(false)
 const orderDetail = ref(null)
 
 const statusMap = {
-  PENDING_PAYMENT: '待付款',
-  PENDING_SHIP: '待发货',
-  SHIPPED: '已发货',
-  COMPLETED: '已完成',
-  CANCELLED: '已取消'
+  0: '待支付',
+  1: '待发货',
+  2: '已发货',
+  3: '已收货',
+  4: '已取消',
+  5: '退款中',
+  6: '已退款'
 }
 
 function statusText(status) {
-  return statusMap[status] || status
+  return statusMap[status] ?? String(status)
 }
 
 function statusType(status) {
   const map = {
-    PENDING_PAYMENT: 'warning',
-    PENDING_SHIP: 'primary',
-    SHIPPED: 'info',
-    COMPLETED: 'success',
-    CANCELLED: 'danger'
+    0: 'warning',
+    1: 'primary',
+    2: 'info',
+    3: 'success',
+    4: 'danger',
+    5: 'warning',
+    6: 'info'
   }
-  return map[status] || 'info'
+  return map[status] ?? 'info'
 }
 
 async function fetchOrders() {
   loading.value = true
   try {
     const params = {
-      page: currentPage.value,
-      size: pageSize.value,
-      status: filterStatus.value,
+      pageNum: currentPage.value,
+      pageSize: pageSize.value,
       orderNo: filterOrderNo.value
     }
+    // filterStatus 使用 null 避免发送空字符串给后端 Integer 参数
+    if (filterStatus.value !== null && filterStatus.value !== '') {
+      params.status = filterStatus.value
+    }
     if (filterDateRange.value && filterDateRange.value.length === 2) {
-      params.startDate = filterDateRange.value[0]
-      params.endDate = filterDateRange.value[1]
+      // 后端期望 yyyy-MM-dd HH:mm:ss 格式
+      params.startTime = filterDateRange.value[0] + ' 00:00:00'
+      params.endTime = filterDateRange.value[1] + ' 23:59:59'
     }
     const res = await getOrders(params)
     tableData.value = res.records || []

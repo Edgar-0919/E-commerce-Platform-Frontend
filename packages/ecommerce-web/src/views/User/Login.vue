@@ -1,10 +1,7 @@
 <template>
   <div class="login-page">
     <div class="login-card">
-      <div class="login-tabs">
-        <span class="tab-item active">密码登录</span>
-        <span class="tab-item">短信登录</span>
-      </div>
+      <h2 class="login-title">登录</h2>
 
       <form class="login-form" @submit.prevent="handleLogin">
         <div class="input-group" :class="{ error: errors.username }">
@@ -141,27 +138,12 @@ function goToRegister() {
   box-shadow: var(--shadow-md);
 }
 
-.login-tabs {
-  display: flex;
-  justify-content: center;
-  gap: 40px;
-  margin-bottom: 28px;
-}
-
-.tab-item {
-  font-size: var(--font-size-lg);
-  color: var(--text-light);
-  cursor: pointer;
-  padding-bottom: 8px;
-  border-bottom: 2px solid transparent;
-  transition: all var(--duration-fast);
-  font-weight: var(--font-weight-medium);
-}
-
-.tab-item.active {
+.login-title {
+  text-align: center;
+  font-size: 24px;
+  font-weight: var(--font-weight-bold);
   color: var(--text-primary);
-  border-bottom-color: var(--primary-color);
-  font-weight: var(--font-weight-semibold);
+  margin-bottom: 28px;
 }
 
 .login-form {

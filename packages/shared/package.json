@@ -1,0 +1,11 @@
+{
+  "name": "@ecommerce/shared",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./index.js",
+  "peerDependencies": {
+    "vue": "^3.4.0",
+    "element-plus": "^2.5.0",
+    "axios": "^1.6.0"
+  }
+}

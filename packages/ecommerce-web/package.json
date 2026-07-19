@@ -8,6 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ecommerce/shared": "*",
     "@element-plus/icons-vue": "^2.3.0",
     "@vueuse/core": "^14.3.0",
     "axios": "^1.7.0",

@@ -42,3 +42,11 @@ export function updateAddress(id, data) {
 export function deleteAddress(id) {
   return request.delete(`/user/address/${id}`)
 }
+
+export function submitMerchantApplication(data) {
+  return request.post('/user/merchant-application', data)
+}
+
+export function getMerchantApplicationStatus() {
+  return request.get('/user/merchant-application')
+}

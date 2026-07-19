@@ -10,7 +10,6 @@ import request from './request'
  * @param {number} params.page - 页码
  * @param {number} params.size - 每页数量
  * @param {number} [params.categoryId] - 分类ID
- * @param {number} [params.brandId] - 品牌ID
  * @param {string} [params.keyword] - 关键词
  * @returns {Promise} 商品列表
  */

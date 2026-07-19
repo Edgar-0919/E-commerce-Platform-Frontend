@@ -23,7 +23,6 @@
             <span>商品管理</span>
           </template>
           <el-menu-item index="/admin/products">商品列表</el-menu-item>
-          <el-menu-item v-if="isAdmin" index="/admin/brands">品牌管理</el-menu-item>
           <el-menu-item v-if="isAdmin" index="/admin/categories">分类管理</el-menu-item>
           <el-menu-item index="/admin/inventory">库存管理</el-menu-item>
         </el-sub-menu>
@@ -39,13 +38,16 @@
           <el-icon><User /></el-icon>
           <span>用户管理</span>
         </el-menu-item>
+        <el-menu-item v-if="isAdmin" index="/admin/merchants">
+          <el-icon><OfficeBuilding /></el-icon>
+          <span>商户管理</span>
+        </el-menu-item>
         <el-sub-menu index="marketing-group">
           <template #title>
             <el-icon><Present /></el-icon>
             <span>营销管理</span>
           </template>
           <el-menu-item index="/admin/coupons">优惠券模板</el-menu-item>
-          <el-menu-item index="/admin/promotions">促销活动</el-menu-item>
         </el-sub-menu>
       </el-menu>
     </el-aside>
@@ -83,7 +85,7 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAdminStore } from '@/store/admin'
-import { Monitor, Goods, Document, User, Present, Expand, Fold, ArrowDown, SwitchButton, Money } from '@element-plus/icons-vue'
+import { Monitor, Goods, Document, User, Present, Expand, Fold, ArrowDown, SwitchButton, Money, OfficeBuilding } from '@element-plus/icons-vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -98,7 +100,6 @@ const isAdmin = computed(() => {
 const activeMenu = computed(() => {
   const p = route.path
   if (p.startsWith('/admin/products')) return '/admin/products'
-  if (p.startsWith('/admin/brands')) return '/admin/brands'
   if (p.startsWith('/admin/categories')) return '/admin/categories'
   if (p.startsWith('/admin/inventory')) return '/admin/inventory'
   if (p.startsWith('/admin/orders')) return '/admin/orders'
@@ -106,6 +107,7 @@ const activeMenu = computed(() => {
   if (p.startsWith('/admin/users')) return '/admin/users'
   if (p.startsWith('/admin/coupons')) return '/admin/coupons'
   if (p.startsWith('/admin/promotions')) return '/admin/promotions'
+  if (p.startsWith('/admin/merchants')) return '/admin/merchants'
   return p
 })
 

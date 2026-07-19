@@ -110,7 +110,6 @@
           </div>
           <div v-if="activeTab === 'spec'" class="tab-panel">
             <table class="spec-table">
-              <tr><td class="spec-label">品牌</td><td>{{ product.brandName || '未知' }}</td></tr>
               <tr><td class="spec-label">分类</td><td>{{ product.categoryName || '未知' }}</td></tr>
             </table>
           </div>
@@ -128,10 +127,10 @@ import { getProductDetail } from '@/api/product'
 import { addToCart } from '@/api/cart'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/store/user'
-import LazyImage from '@/components/common/LazyImage.vue'
-import SkeletonLoader from '@/components/common/SkeletonLoader.vue'
-import ErrorState from '@/components/common/ErrorState.vue'
-import BreadcrumbNav from '@/components/common/BreadcrumbNav.vue'
+import { LazyImage } from '@ecommerce/shared'
+import { SkeletonLoader } from '@ecommerce/shared'
+import { ErrorState } from '@ecommerce/shared'
+import { BreadcrumbNav } from '@ecommerce/shared'
 
 const route = useRoute()
 const router = useRouter()
@@ -149,7 +148,6 @@ const product = reactive({
   discount: null,
   sales: 0,
   image: '',
-  brandName: '',
   categoryName: '',
   mainImage: '',
   images: [],
@@ -165,7 +163,8 @@ const productImages = computed(() => {
   const imgs = []
   if (product.mainImage) imgs.push(product.mainImage)
   if (product.images && product.images.length > 0) imgs.push(...product.images)
-  return imgs.length > 0 ? imgs : []
+  // 过滤掉空字符串/undefined 的图片路径，避免浏览器用当前 URL 当作图片加载
+  return imgs.filter(img => img && String(img).trim() !== '')
 })
 
 const currentImage = computed(() => productImages.value[currentImageIndex.value] || '')
@@ -228,8 +227,19 @@ async function handleAddToCart() {
   }
 }
 
-function buyNow() {
-  router.push('/cart')
+async function buyNow() {
+  // 未登录时跳转到登录页，登录成功后回跳当前商品详情
+  if (!userStore.token) {
+    ElMessage.warning('请先登录')
+    router.push({ path: '/login', query: { redirect: route.fullPath } })
+    return
+  }
+  try {
+    await addToCart({ skuId: selectedSkuId.value, quantity: quantity.value })
+    router.push('/checkout')
+  } catch (e) {
+    ElMessage.error('加入购物车失败，请重试')
+  }
 }
 
 async function loadProduct() {
@@ -564,23 +574,30 @@ onMounted(() => {
 
 .btn-cart,
 .btn-buy {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  height: 46px;
-  font-size: 16px;
+  gap: 8px;
+  height: 48px;
+  font-size: 15px;
   font-weight: var(--font-weight-semibold);
   cursor: pointer;
   transition: all var(--duration-fast);
   border-radius: 24px;
-  padding: 0 28px;
+  padding: 0 32px;
+  white-space: nowrap;
 }
 
 .btn-cart {
   background: var(--bg-white);
   color: var(--price-color);
   border: 1px solid var(--price-color);
+}
+
+.btn-cart svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 
 .btn-cart:hover {

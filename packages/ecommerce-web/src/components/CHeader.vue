@@ -11,23 +11,6 @@
         <div class="nav-links">
           <a class="nav-link" :class="{ active: isActive('/home') }" @click="goTo('/home')">首页</a>
           <a class="nav-link" :class="{ active: isActive('/search') }" @click="goTo('/search')">探索</a>
-          <a class="nav-link cat-trigger-link" @mouseenter="showCategoryDropdown = true">
-            分类 <span class="arrow" :class="{ open: showCategoryDropdown }">▾</span>
-          </a>
-        </div>
-
-        <!-- Category Dropdown -->
-        <div v-if="showCategoryDropdown" class="category-dropdown" @mouseleave="showCategoryDropdown = false">
-          <div class="cat-grid">
-            <div
-              v-for="cat in categories"
-              :key="cat.id"
-              class="cat-item"
-              @click="goTo(`/search?categoryId=${cat.id}`)"
-            >
-              <span>{{ cat.name }}</span>
-            </div>
-          </div>
         </div>
       </nav>
 
@@ -134,8 +117,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/store/user'
 import { useThemeStore } from '@/store/theme'
 import { getCartList } from '@/api/cart'
-import { getCategoryTree } from '@/api/product'
-import { searchSuggest } from '@/api/search'
+import { searchProducts } from '@/api/search'
 
 const router = useRouter()
 const route = useRoute()
@@ -144,8 +126,6 @@ const themeStore = useThemeStore()
 const searchText = ref('')
 const cartCount = ref(0)
 const showMobileMenu = ref(false)
-const showCategoryDropdown = ref(false)
-const categories = ref([])
 // 搜索建议
 const suggestions = ref([])
 const showSuggestions = ref(false)
@@ -156,7 +136,6 @@ function isActive(path) {
 }
 
 function goTo(path) {
-  showCategoryDropdown.value = false
   showMobileMenu.value = false
   router.push(path)
 }
@@ -170,7 +149,7 @@ function handleSearch() {
   }
 }
 
-// 搜索建议输入处理（防抖）
+// 搜索建议输入处理（防抖，调用 /product/search 获取商品名称作为建议词）
 function handleSuggestInput() {
   clearTimeout(suggestTimer)
   const kw = searchText.value.trim()
@@ -181,8 +160,9 @@ function handleSuggestInput() {
   }
   suggestTimer = setTimeout(async () => {
     try {
-      const result = await searchSuggest(kw)
-      suggestions.value = Array.isArray(result) ? result : []
+      const result = await searchProducts({ keyword: kw, page: 1, size: 5 })
+      const records = result?.records || result?.data?.records || []
+      suggestions.value = records.map(p => p.name).filter(Boolean)
       showSuggestions.value = suggestions.value.length > 0
     } catch {
       suggestions.value = []
@@ -226,21 +206,12 @@ async function loadCartCount() {
   }
 }
 
-async function loadCategories() {
-  try {
-    categories.value = await getCategoryTree()
-  } catch (e) {
-    categories.value = []
-  }
-}
-
 watch(() => route.path, () => {
   showMobileMenu.value = false
 })
 
 onMounted(() => {
   loadCartCount()
-  loadCategories()
 })
 </script>
 

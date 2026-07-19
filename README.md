@@ -35,8 +35,8 @@ frontend/
     │       ├── router/             # 独立路由 + 鉴权（14条）
     │       ├── store/              # user.js + theme.js
     │       ├── styles/             # tokens.css + element-override.css + web.css
-    │       ├── utils/              # format.js
-    │       └── views/              # Home/Goods/Order/User/NotFound/mock
+    │       ├── utils/           # format.js
+    │       └── views/           # Home/Goods/Order/User/NotFound/MerchantApply
     └── ecommerce-admin/            # B端管理系统（端口 5174）
         ├── index.html
         ├── vite.config.js
@@ -94,8 +94,10 @@ npm run preview:admin
 | `/payment/result` | 支付结果 | 需登录 |
 | `/user` | 个人中心 | 需登录 |
 | `/user/coupons` | 我的优惠券 | 需登录 |
-| `/user/points` | 积分明细 | 需登录 |
+| `/user/merchant-apply` | 商户入驻申请 | 需登录 |
 | `/:pathMatch(.*)*` | 404 | 公开 |
+
+> 注册页面已移除角色选择，默认注册为普通用户（ROLE_USER）
 
 ### B端路由（ecommerce-admin）
 
@@ -112,8 +114,8 @@ npm run preview:admin
 | `/admin/orders` | 订单管理 | ADMIN, MERCHANT |
 | `/admin/refunds` | 退款管理 | ADMIN, MERCHANT |
 | `/admin/users` | 用户管理 | ADMIN only |
+| `/admin/merchants` | 商户管理（含入驻申请审核） | ADMIN only |
 | `/admin/coupons` | 优惠券管理 | ADMIN, MERCHANT |
-| `/admin/promotions` | 促销管理 | ADMIN, MERCHANT |
 
 ### 路由守卫
 
@@ -152,6 +154,14 @@ const TOKEN_KEY = 'ecommerce_web_token'
 // code=200 直接返回 data；code=401 清除 token 跳转 /login
 // baseURL: /api，timeout: 15000ms
 ```
+
+**商户申请API：**
+- `POST /api/user/merchant-application` - 提交商户入驻申请
+- `GET /api/user/merchant-application` - 获取当前用户申请状态
+
+**用户信息扩展字段：**
+- `merchantApplicationStatus` - 商户申请状态（0待审核 1已通过 2已拒绝）
+- `merchantApplicationStatusText` - 状态文本描述
 
 ### B端（ecommerce-admin）
 

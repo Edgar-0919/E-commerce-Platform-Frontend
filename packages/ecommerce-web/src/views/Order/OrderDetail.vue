@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="order-detail-page">
     <BreadcrumbNav :items="[{ name: '我的订单', path: '/order' }, { name: '订单详情' }]" />
 
@@ -99,10 +99,10 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getOrderDetail, cancelOrder } from '@/api/order'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import LazyImage from '@/components/common/LazyImage.vue'
-import SkeletonLoader from '@/components/common/SkeletonLoader.vue'
-import ErrorState from '@/components/common/ErrorState.vue'
-import BreadcrumbNav from '@/components/common/BreadcrumbNav.vue'
+import { LazyImage } from '@ecommerce/shared'
+import { SkeletonLoader } from '@ecommerce/shared'
+import { ErrorState } from '@ecommerce/shared'
+import { BreadcrumbNav } from '@ecommerce/shared'
 
 const route = useRoute()
 const router = useRouter()

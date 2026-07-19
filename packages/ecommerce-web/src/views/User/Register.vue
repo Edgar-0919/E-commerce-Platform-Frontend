@@ -60,7 +60,9 @@
             </button>
           </div>
           <span v-if="form.confirmPassword && form.password === form.confirmPassword" class="match-ok">
-            <CircleCheck /> 密码一致
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg> 密码一致
           </span>
           <span v-if="errors.confirmPassword" class="error-text">{{ errors.confirmPassword }}</span>
         </div>
@@ -91,6 +93,20 @@
           <span v-if="errors.phone" class="error-text">{{ errors.phone }}</span>
         </div>
 
+        <div class="input-group" :class="{ error: errors.email }">
+          <div class="input-pill">
+            <Message class="input-icon" />
+            <input
+              v-model="form.email"
+              type="email"
+              placeholder="邮箱（选填）"
+              class="pill-input"
+              @blur="validateField('email')"
+            />
+          </div>
+          <span v-if="errors.email" class="error-text">{{ errors.email }}</span>
+        </div>
+
         <label class="agree-terms">
           <input type="checkbox" v-model="form.agree" />
           <span>我已阅读并同意</span>
@@ -116,7 +132,7 @@
 <script setup>
 import { ref, reactive, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { User, Lock, Phone, View, Hide, CircleCheck, Loading } from '@element-plus/icons-vue'
+import { User, Lock, Phone, Message, View, Hide, Loading } from '@element-plus/icons-vue'
 import { register } from '@/api/user'
 import { ElMessage } from 'element-plus'
 
@@ -128,7 +144,8 @@ const errors = reactive({
   username: '',
   password: '',
   confirmPassword: '',
-  phone: ''
+  phone: '',
+  email: ''
 })
 
 const form = reactive({
@@ -137,6 +154,7 @@ const form = reactive({
   confirmPassword: '',
   nickname: '',
   phone: '',
+  email: '',
   agree: false
 })
 
@@ -176,6 +194,10 @@ function validateField(field) {
       if (form.phone && !/^1[3-9]\d{9}$/.test(form.phone)) errors.phone = '请输入正确的手机号'
       else errors.phone = ''
       break
+    case 'email':
+      if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errors.email = '请输入正确的邮箱格式'
+      else errors.email = ''
+      break
   }
 }
 
@@ -184,6 +206,7 @@ async function handleRegister() {
   validateField('password')
   validateField('confirmPassword')
   validateField('phone')
+  validateField('email')
 
   if (!form.username.trim()) {
     ElMessage.error('请输入用户名')
@@ -212,7 +235,8 @@ async function handleRegister() {
       username: form.username,
       password: form.password,
       nickname: form.nickname,
-      phone: form.phone
+      phone: form.phone,
+      email: form.email
     })
     ElMessage.success('注册成功，请登录')
     router.push('/login')

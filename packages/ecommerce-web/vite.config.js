@@ -18,6 +18,8 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+    // 禁用 __vitePreload polyfill，避免 Image.onload 回调中 v[w] is not a function 类崩溃
+    modulePreload: { polyfill: false },
     rollupOptions: {
       output: {
         manualChunks: {

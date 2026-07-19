@@ -11,8 +11,9 @@
     <el-card shadow="never" style="margin-top: 16px">
       <el-table :data="tableData" v-loading="loading" stripe :row-class-name="rowClassName">
         <el-table-column prop="skuId" label="SKU ID" width="120" />
-        <el-table-column prop="productId" label="商品ID" width="120" />
-        <el-table-column prop="totalStock" label="总库存" width="100" />
+        <el-table-column prop="productId" label="商品ID" width="100" />
+        <el-table-column prop="productName" label="商品名称" min-width="160" show-overflow-tooltip />
+        <el-table-column prop="totalStock" label="总库存" width="90" />
         <el-table-column prop="lockedStock" label="锁定库存" width="100" />
         <el-table-column prop="availableStock" label="可用库存" width="100">
           <template #default="{ row }">
@@ -103,7 +104,7 @@ const loading = ref(false)
 const searchProductId = ref('')
 const onlyLowStock = ref(false)
 const currentPage = ref(1)
-const pageSize = ref(10)
+const pageSize = ref(20)
 const total = ref(0)
 
 const adjustDialogVisible = ref(false)

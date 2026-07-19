@@ -41,7 +41,7 @@
             v-for="item in order.items"
             :key="item.id"
             class="order-item"
-            @click="goToProduct(item.id)"
+            @click="goToProduct(item.productId)"
           >
             <LazyImage :src="item.image" alt="" class="item-thumb" :width="'72px'" :height="'72px'" />
             <div class="item-info">
@@ -63,28 +63,35 @@
           </div>
           <div class="order-actions">
             <button
-              v-if="order.status === 20"
+              v-if="order.status === 0"
               class="action-btn action-primary"
               @click="handleOrder(order.id, 'pay')"
             >
               去支付
             </button>
             <button
-              v-if="order.status === 20"
+              v-if="order.status === 0"
               class="action-btn action-default"
               @click="handleOrder(order.id, 'cancel')"
             >
               取消订单
             </button>
             <button
-              v-if="order.status === 30"
+              v-if="order.status === 2"
               class="action-btn action-primary"
               @click="handleOrder(order.id, 'confirm')"
             >
               确认收货
             </button>
             <button
-              v-if="order.status === 50"
+              v-if="order.status === 2"
+              class="action-btn action-default"
+              @click="handleOrder(order.id, 'refund')"
+            >
+              申请退款
+            </button>
+            <button
+              v-if="order.status === 3"
               class="action-btn action-default"
               @click="handleOrder(order.id, 'review')"
             >
@@ -108,16 +115,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { getOrderPage, cancelOrder } from '@/api/order'
+import { ref, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { getOrderPage, cancelOrder, confirmReceiveOrder, requestRefund } from '@/api/order'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import SkeletonLoader from '@/components/common/SkeletonLoader.vue'
-import ErrorState from '@/components/common/ErrorState.vue'
-import EmptyState from '@/components/common/EmptyState.vue'
-import LazyImage from '@/components/common/LazyImage.vue'
+import { SkeletonLoader } from '@ecommerce/shared'
+import { ErrorState } from '@ecommerce/shared'
+import { EmptyState } from '@ecommerce/shared'
+import { LazyImage } from '@ecommerce/shared'
 
 const router = useRouter()
+const route = useRoute()
 const activeTab = ref('all')
 const orderList = ref([])
 const loading = ref(true)
@@ -130,31 +138,32 @@ const tabs = [
   { key: 'all', label: '全部' },
   { key: 'pending', label: '待付款' },
   { key: 'paid', label: '待发货' },
-  { key: 'completed', label: '待收货' }
+  { key: 'completed', label: '待收货' },
+  { key: 'afterSale', label: '售后' }
 ]
 
 function getStatusText(status) {
   const map = {
-    10: '已取消',
-    20: '待付款',
-    30: '待发货',
-    40: '待收货',
-    50: '已完成',
-    60: '退款中',
-    70: '已退款'
+    0: '待支付',
+    1: '待发货',
+    2: '已发货',
+    3: '已收货',
+    4: '已取消',
+    5: '退款中',
+    6: '已退款'
   }
   return map[status] || String(status)
 }
 
 function getStatusClass(status) {
   const map = {
-    10: 'status-cancelled',
-    20: 'status-pending',
-    30: 'status-paid',
-    40: 'status-shipped',
-    50: 'status-completed',
-    60: 'status-refunding',
-    70: 'status-refunded'
+    0: 'status-pending',
+    1: 'status-paid',
+    2: 'status-shipped',
+    3: 'status-completed',
+    4: 'status-cancelled',
+    5: 'status-refunding',
+    6: 'status-refunded'
   }
   return map[status] || ''
 }
@@ -170,7 +179,7 @@ function goToProduct(id) {
 async function handleOrder(orderId, action) {
   switch (action) {
     case 'pay':
-      ElMessage.success('支付功能开发中')
+      router.push(`/payment/${orderId}`)
       break
     case 'cancel':
       try {
@@ -187,10 +196,46 @@ async function handleOrder(orderId, action) {
       }
       break
     case 'confirm':
-      ElMessage.success('确认收货成功')
+      try {
+        await confirmReceiveOrder(orderId)
+        ElMessage.success('确认收货成功')
+        // 状态从"已发货"→"已收货"，订单从当前"待收货"tab移走，刷新列表
+        loadOrders()
+      } catch (e) {
+        // request 拦截器已处理异常提示
+      }
       break
     case 'review':
       ElMessage.success('评价功能开发中')
+      break
+    case 'refund':
+      try {
+        const { value: refundReason } = await ElMessageBox.prompt(
+          '请填写退款原因，提交后需要管理员审核',
+          '申请退款',
+          {
+            confirmButtonText: '提交',
+            cancelButtonText: '取消',
+            type: 'warning',
+            inputValidator: (value) => {
+              if (!value || !value.trim()) {
+                return '请填写退款原因'
+              }
+              return true
+            }
+          }
+        )
+        await requestRefund({
+          orderId: orderId,
+          amount: orderList.value.find(o => o.id === orderId)?.payAmount,
+          refundType: 1,
+          reason: refundReason.trim()
+        })
+        ElMessage.success('退款申请已提交，请等待管理员审核')
+        loadOrders()
+      } catch (e) {
+        if (e !== 'cancel') ElMessage.error('退款申请失败')
+      }
       break
   }
 }
@@ -210,7 +255,21 @@ async function loadOrders() {
   }
 }
 
+function syncTabFromQuery() {
+  const status = route.query.status
+  if (status && tabs.some(tab => tab.key === status)) {
+    activeTab.value = status
+    currentPage.value = 1
+  }
+}
+
+watch(() => route.query.status, () => {
+  syncTabFromQuery()
+  loadOrders()
+})
+
 onMounted(() => {
+  syncTabFromQuery()
   loadOrders()
 })
 </script>

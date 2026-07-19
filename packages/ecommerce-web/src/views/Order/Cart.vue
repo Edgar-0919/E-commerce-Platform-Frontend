@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="cart-page">
     <div class="cart-header">
       <h2>购物车</h2>
@@ -102,10 +102,10 @@ import { useRouter } from 'vue-router'
 import { ShoppingCart } from '@element-plus/icons-vue'
 import { getCartList, updateCartItem, deleteCartItem } from '@/api/cart'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import SkeletonLoader from '@/components/common/SkeletonLoader.vue'
-import ErrorState from '@/components/common/ErrorState.vue'
-import EmptyState from '@/components/common/EmptyState.vue'
-import LazyImage from '@/components/common/LazyImage.vue'
+import { SkeletonLoader } from '@ecommerce/shared'
+import { ErrorState } from '@ecommerce/shared'
+import { EmptyState } from '@ecommerce/shared'
+import { LazyImage } from '@ecommerce/shared'
 
 const router = useRouter()
 const cartList = ref([])

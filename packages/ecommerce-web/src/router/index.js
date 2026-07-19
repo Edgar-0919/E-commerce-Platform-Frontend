@@ -55,7 +55,7 @@ const routes = [
     meta: { title: '确认订单', requiresAuth: true }
   },
   {
-    path: '/payment',
+    path: '/payment/:orderId',
     name: 'Payment',
     component: () => import('@/views/Order/Payment.vue'),
     meta: { title: '支付', requiresAuth: true }
@@ -84,11 +84,12 @@ const routes = [
     component: () => import('@/views/User/UserCoupons.vue'),
     meta: { title: '我的优惠券', requiresAuth: true }
   },
+  
   {
-    path: '/user/points',
-    name: 'UserPoints',
-    component: () => import('@/views/User/UserPoints.vue'),
-    meta: { title: '积分明细', requiresAuth: true }
+    path: '/user/merchant-apply',
+    name: 'MerchantApply',
+    component: () => import('@/views/User/MerchantApply.vue'),
+    meta: { title: '成为商家', requiresAuth: true }
   },
   {
     path: '/search',

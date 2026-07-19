@@ -25,29 +25,6 @@
         </div>
       </div>
 
-      <div class="stats-row">
-        <div class="stat-item" @click="goToOrder('all')">
-          <span class="stat-num">{{ userStats.orders }}</span>
-          <span class="stat-label">全部订单</span>
-        </div>
-        <div class="stat-item" @click="goToOrder('pending')">
-          <span class="stat-num">{{ orderCounts.pending }}</span>
-          <span class="stat-label">待付款</span>
-        </div>
-        <div class="stat-item" @click="goToOrder('paid')">
-          <span class="stat-num">{{ orderCounts.paid }}</span>
-          <span class="stat-label">待发货</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-num">0</span>
-          <span class="stat-label">待收货</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-num">0</span>
-          <span class="stat-label">待评价</span>
-        </div>
-      </div>
-
       <div class="menu-card">
         <div class="card-header">
           <h3>我的订单</h3>
@@ -59,14 +36,12 @@
               <ShoppingCart />
             </div>
             <span>待付款</span>
-            <span v-if="orderCounts.pending > 0" class="badge">{{ orderCounts.pending }}</span>
           </div>
           <div class="icon-item" @click="goToOrder('paid')">
             <div class="icon-circle">
               <Box />
             </div>
             <span>待发货</span>
-            <span v-if="orderCounts.paid > 0" class="badge">{{ orderCounts.paid }}</span>
           </div>
           <div class="icon-item">
             <div class="icon-circle">
@@ -84,37 +59,28 @@
       </div>
 
       <div class="menu-card">
-        <div class="card-header">
-          <h3>必备工具</h3>
-        </div>
         <div class="menu-list">
           <div class="menu-item" @click="goToAddress">
             <MapLocation class="menu-icon" />
             <span>收货地址</span>
             <ArrowRight class="menu-arrow" />
           </div>
-          <div class="menu-item">
-            <Collection class="menu-icon" />
-            <span>我的收藏</span>
-            <ArrowRight class="menu-arrow" />
-          </div>
-          <div class="menu-item">
+          <div class="menu-item" @click="goToCoupons">
             <Ticket class="menu-icon" />
             <span>优惠券</span>
-            <span class="menu-badge">{{ userStats.coupons }}</span>
+            <span class="menu-badge"></span>
             <ArrowRight class="menu-arrow" />
           </div>
-          <div class="menu-item">
-            <Coin class="menu-icon" />
-            <span>积分</span>
-            <span class="menu-badge">{{ userStats.points }}</span>
+          <div class="menu-item" @click="goToMerchantApply">
+            <OfficeBuilding class="menu-icon" />
+            <span>成为商家</span>
+            <span v-if="userInfo.merchantApplicationStatus" 
+                  class="menu-badge" 
+                  :class="getApplicationBadgeClass(userInfo.merchantApplicationStatus)">
+              {{ userInfo.merchantApplicationStatusText }}
+            </span>
             <ArrowRight class="menu-arrow" />
           </div>
-        </div>
-      </div>
-
-      <div class="menu-card">
-        <div class="menu-list">
           <div class="menu-item">
             <Setting class="menu-icon" />
             <span>账户设置</span>
@@ -123,7 +89,6 @@
           <div class="menu-item menu-logout" @click="handleLogout">
             <Back class="menu-icon" />
             <span>退出登录</span>
-            <ArrowRight class="menu-arrow" />
           </div>
         </div>
       </div>
@@ -136,12 +101,12 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   User, ShoppingCart, Box, Star, Refresh,
-  MapLocation, Ticket, Coin, Collection, Setting, Back, ArrowRight
+  MapLocation, Ticket, Setting, Back, ArrowRight, OfficeBuilding
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/store/user'
 import { getUserInfo } from '@/api/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import ErrorState from '@/components/common/ErrorState.vue'
+import { ErrorState } from '@ecommerce/shared'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -156,19 +121,13 @@ const userInfo = ref({
 const userStats = ref({
   orders: 5,
   coupons: 3,
-  points: 2580,
   favorites: 12
 })
 
-const orderCounts = ref({
-  pending: 2,
-  paid: 1,
-  completed: 0,
-  refund: 0
-})
+
 
 function goToOrder(type) {
-  router.push('/order')
+  router.push({ path: '/order', query: { status: type } })
 }
 
 function goToOrders() {
@@ -177,6 +136,22 @@ function goToOrders() {
 
 function goToAddress() {
   router.push('/address')
+}
+
+function goToCoupons() {
+  router.push('/user/coupons')
+}
+
+function goToMerchantApply() {
+  router.push('/user/merchant-apply')
+}
+
+function getApplicationBadgeClass(status) {
+  return {
+    'badge-warning': status === 0,
+    'badge-success': status === 1,
+    'badge-danger': status === 2
+  }
 }
 
 async function handleLogout() {
@@ -281,40 +256,6 @@ onMounted(() => {
   opacity: 0.85;
 }
 
-.stats-row {
-  display: flex;
-  background: var(--bg-white);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-}
-
-.stat-item {
-  flex: 1;
-  text-align: center;
-  padding: var(--spacing-md) var(--spacing-xs);
-  cursor: pointer;
-  transition: background var(--duration-fast);
-}
-
-.stat-item:hover {
-  background: var(--bg-hover);
-}
-
-.stat-num {
-  display: block;
-  font-size: var(--font-size-xxl);
-  font-weight: var(--font-weight-bold);
-  color: var(--text-primary);
-  margin-bottom: 4px;
-  line-height: 1.2;
-}
-
-.stat-label {
-  font-size: var(--font-size-xs);
-  color: var(--text-light);
-}
-
 .menu-card {
   background: var(--bg-white);
   border-radius: var(--radius-lg);
@@ -328,6 +269,7 @@ onMounted(() => {
   align-items: center;
   padding: var(--spacing-sm) var(--spacing-md);
   border-bottom: 1px solid var(--border-light);
+  white-space: nowrap;
 }
 
 .card-header h3 {
@@ -340,10 +282,18 @@ onMounted(() => {
   color: var(--text-light);
   font-size: var(--font-size-xs);
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 2px;
+  justify-content: center;
+  gap: 4px;
   transition: color var(--duration-fast);
+  white-space: nowrap;
+}
+
+.card-more svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 
 .card-more:hover {
@@ -409,6 +359,18 @@ onMounted(() => {
   line-height: 16px;
 }
 
+.badge-warning {
+  background: var(--warning-color);
+}
+
+.badge-success {
+  background: var(--success-color);
+}
+
+.badge-danger {
+  background: var(--danger-color);
+}
+
 .menu-list {
   display: flex;
   flex-direction: column;
@@ -454,8 +416,14 @@ onMounted(() => {
 
 .menu-arrow {
   color: var(--text-placeholder);
-  font-size: 5px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
+  transition: color var(--duration-fast);
+}
+
+.menu-item:hover .menu-arrow {
+  color: var(--text-secondary);
 }
 
 .menu-logout .menu-icon {
@@ -493,29 +461,9 @@ onMounted(() => {
     font-size: 28px;
   }
 
-  .stats-row {
-    flex-wrap: wrap;
-  }
-
-  .stat-item {
-    min-width: 20%;
-  }
-
-  .stat-num {
-    font-size: var(--font-size-lg);
-  }
-
   .order-icons {
     flex-wrap: wrap;
     gap: var(--spacing-sm);
-  }
-}
-
-@media (max-width: 480px) {
-  .stat-item {
-    width: 33.33%;
-    flex: none;
-    padding: var(--spacing-sm) var(--spacing-xxs);
   }
 }
 </style>

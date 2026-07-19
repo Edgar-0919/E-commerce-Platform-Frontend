@@ -16,7 +16,7 @@
 <script setup>
 import CHeader from '@/components/CHeader.vue'
 import CFooter from '@/components/CFooter.vue'
-import BackToTop from '@/components/common/BackToTop.vue'
+import { BackToTop } from '@ecommerce/shared'
 </script>
 
 <style scoped>

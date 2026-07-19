@@ -7,12 +7,6 @@
             <span class="brand-text">小羊电商</span>
             <p class="brand-desc">咩咩咩-咩咩咩-咩咩</p>
           </div>
-          <div class="footer-col" v-for="col in linkColumns" :key="col.title">
-            <h4>{{ col.title }}</h4>
-            <ul>
-              <li v-for="link in col.links" :key="link"><a href="#">{{ link }}</a></li>
-            </ul>
-          </div>
           <div class="footer-col contact-col">
             <h4>客服热线</h4>
             <div class="contact-phone">xxx-xxx-xxxx</div>
@@ -42,21 +36,6 @@
 
 <script setup>
 const currentYear = new Date().getFullYear()
-
-const linkColumns = [
-  {
-    title: '购物指南',
-    links: [ '会员介绍', '常见问题', '联系客服']
-  },
-  {
-    title: '配送方式',
-    links: ['配送服务查询', '配送费收取标准', '门店自提']
-  },
-  {
-    title: '售后服务',
-    links: ['售后政策', '退款说明', '返修/退换货', '取消订单']
-  }
-]
 </script>
 
 <style scoped>

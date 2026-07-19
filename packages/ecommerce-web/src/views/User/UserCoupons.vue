@@ -3,14 +3,14 @@
     <BreadcrumbNav :items="[{ name: '个人中心', path: '/user' }, { name: '我的优惠券' }]" />
 
     <div class="page-header">
-      <h2>我的优惠券</h2>
+      <h2>优惠券</h2>
       <div class="status-tabs">
         <span
           v-for="tab in tabs"
           :key="tab.key"
           class="tab-item"
           :class="{ active: activeTab === tab.key }"
-          @click="activeTab = tab.key; loadCoupons()"
+          @click="activeTab = tab.key; loadData()"
         >
           {{ tab.label }}
         </span>
@@ -18,76 +18,139 @@
     </div>
 
     <SkeletonLoader v-if="loading" type="list" :count="3" />
-    <ErrorState v-else-if="error" @retry="loadCoupons" />
-    <EmptyState
-      v-else-if="couponList.length === 0"
-      :description="activeTab === 'all' ? '暂无优惠券' : '暂无符合条件的优惠券'"
-      actionText="去领券"
-      @action="goToHome"
-    />
-
-    <div v-else class="coupon-grid">
-      <div
-        v-for="cp in couponList"
-        :key="cp.id"
-        class="coupon-card"
-        :class="{ used: cp.status === 2, expired: cp.status === 3 }"
-      >
-        <div class="coupon-left">
-          <div class="coupon-value" v-if="cp.discountType === 1">
-            <span class="symbol">¥</span>
-            <span class="num">{{ cp.discountValue }}</span>
+    <ErrorState v-else-if="error" @retry="loadData" />
+    
+    <template v-else-if="activeTab === 'center'">
+      <EmptyState
+        v-if="availableCoupons.length === 0"
+        description="暂无可用优惠券"
+        actionText="返回我的优惠券"
+        @action="activeTab = 'all'; loadData()"
+      />
+      <div v-else class="coupon-grid">
+        <div
+          v-for="cp in availableCoupons"
+          :key="cp.id"
+          class="coupon-card"
+        >
+          <div class="coupon-left">
+            <div class="coupon-value" v-if="cp.type === 1">
+              <span class="symbol">¥</span>
+              <span class="num">{{ cp.amount }}</span>
+            </div>
+            <div class="coupon-value" v-else>
+              <span class="num">{{ cp.amount }}</span>
+              <span class="symbol">折</span>
+            </div>
           </div>
-          <div class="coupon-value" v-else>
-            <span class="num">{{ cp.discountValue }}</span>
-            <span class="symbol">折</span>
+          <div class="coupon-right">
+            <h4 class="coupon-name">{{ cp.name }}</h4>
+            <p class="coupon-condition">满{{ cp.threshold }}元可用</p>
+            <p class="coupon-date">{{ formatDate(cp.startTime) }} - {{ formatDate(cp.endTime) }}</p>
+            <p class="coupon-stock">剩余 {{ cp.issuedCount }}/{{ cp.totalCount }}</p>
           </div>
+          <el-button
+            class="receive-btn"
+            type="primary"
+            size="small"
+            :disabled="cp.issuedCount >= cp.totalCount"
+            @click="handleReceive(cp.id)"
+          >
+            {{ cp.issuedCount >= cp.totalCount ? '已领完' : '立即领取' }}
+          </el-button>
         </div>
-        <div class="coupon-right">
-          <h4 class="coupon-name">{{ cp.name }}</h4>
-          <p class="coupon-condition">满{{ cp.minAmount }}元可用</p>
-          <p class="coupon-date">有效期至 {{ cp.expireTime || '--' }}</p>
-        </div>
-        <div class="coupon-status-badge" v-if="cp.status === 2">已使用</div>
-        <div class="coupon-status-badge expired-badge" v-if="cp.status === 3">已过期</div>
       </div>
-    </div>
+    </template>
+
+    <template v-else>
+      <EmptyState
+        v-if="couponList.length === 0"
+        :description="activeTab === 'all' ? '暂无优惠券' : '暂无符合条件的优惠券'"
+        actionText="去领券"
+        @action="activeTab = 'center'; loadData()"
+      />
+      <div v-else class="coupon-grid">
+        <div
+          v-for="cp in couponList"
+          :key="cp.id"
+          class="coupon-card"
+          :class="{ used: cp.status === 2, expired: cp.status === 3 }"
+        >
+          <div class="coupon-left">
+            <div class="coupon-value" v-if="cp.discountType === 1">
+              <span class="symbol">¥</span>
+              <span class="num">{{ cp.discountValue }}</span>
+            </div>
+            <div class="coupon-value" v-else>
+              <span class="num">{{ cp.discountValue }}</span>
+              <span class="symbol">折</span>
+            </div>
+          </div>
+          <div class="coupon-right">
+            <h4 class="coupon-name">{{ cp.name }}</h4>
+            <p class="coupon-condition">满{{ cp.minAmount }}元可用</p>
+            <p class="coupon-date">有效期至 {{ cp.expireTime || '--' }}</p>
+          </div>
+          <div class="coupon-status-badge" v-if="cp.status === 2">已使用</div>
+          <div class="coupon-status-badge expired-badge" v-if="cp.status === 3">已过期</div>
+        </div>
+      </div>
+    </template>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { getMyCoupons } from '@/api/marketing'
-import SkeletonLoader from '@/components/common/SkeletonLoader.vue'
-import ErrorState from '@/components/common/ErrorState.vue'
-import EmptyState from '@/components/common/EmptyState.vue'
-import BreadcrumbNav from '@/components/common/BreadcrumbNav.vue'
+import { getMyCoupons, getAvailableCoupons, receiveCoupon } from '@/api/marketing'
+import { SkeletonLoader, ErrorState, EmptyState, BreadcrumbNav } from '@ecommerce/shared'
+import { ElMessage } from 'element-plus'
 
 const router = useRouter()
 const loading = ref(true)
 const error = ref(false)
 const activeTab = ref('all')
 const couponList = ref([])
+const availableCoupons = ref([])
 
 const tabs = [
   { key: 'all', label: '全部' },
   { key: 'available', label: '可使用' },
   { key: 'used', label: '已使用' },
-  { key: 'expired', label: '已过期' }
+  { key: 'expired', label: '已过期' },
+  { key: 'center', label: '领券中心' }
 ]
 
-function goToHome() {
-  router.push('/home')
+function formatDate(dateStr) {
+  if (!dateStr) return '--'
+  const date = new Date(dateStr)
+  return `${date.getMonth() + 1}/${date.getDate()}`
 }
 
-async function loadCoupons() {
+async function handleReceive(templateId) {
+  try {
+    await receiveCoupon(templateId)
+    ElMessage.success('领取成功')
+    loadData()
+  } catch (e) {
+    ElMessage.error('领取失败')
+  }
+}
+
+async function loadData() {
   loading.value = true
   error.value = false
   try {
-    const statusMap = { all: undefined, available: 1, used: 2, expired: 3 }
-    const result = await getMyCoupons(statusMap[activeTab.value])
-    couponList.value = result || []
+    if (activeTab.value === 'center') {
+      const result = await getAvailableCoupons()
+      availableCoupons.value = result || []
+      couponList.value = []
+    } else {
+      const statusMap = { all: undefined, available: 1, used: 2, expired: 3 }
+      const result = await getMyCoupons(statusMap[activeTab.value])
+      couponList.value = result || []
+      availableCoupons.value = []
+    }
   } catch (e) {
     error.value = true
   } finally {
@@ -96,7 +159,7 @@ async function loadCoupons() {
 }
 
 onMounted(() => {
-  loadCoupons()
+  loadData()
 })
 </script>
 
@@ -126,10 +189,11 @@ onMounted(() => {
   overflow: hidden;
   border: 1px solid var(--border-color);
   display: inline-flex;
+  flex-wrap: wrap;
 }
 
 .tab-item {
-  padding: 6px 20px;
+  padding: 6px 16px;
   font-size: 13px;
   color: var(--text-secondary);
   cursor: pointer;
@@ -206,12 +270,16 @@ onMounted(() => {
   flex-direction: column;
   justify-content: center;
   gap: 4px;
+  min-width: 0;
 }
 
 .coupon-name {
   font-size: 15px;
   font-weight: var(--font-weight-semibold);
   color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .coupon-condition {
@@ -222,6 +290,11 @@ onMounted(() => {
 .coupon-date {
   font-size: 11px;
   color: var(--text-placeholder);
+}
+
+.coupon-stock {
+  font-size: 11px;
+  color: var(--warning-color);
 }
 
 .coupon-status-badge {
@@ -240,9 +313,22 @@ onMounted(() => {
   color: #ff4d4f;
 }
 
+.receive-btn {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  font-size: 12px;
+  padding: 4px 12px;
+}
+
 @media (max-width: 768px) {
   .coupon-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .tab-item {
+    padding: 6px 12px;
+    font-size: 12px;
   }
 }
 </style>

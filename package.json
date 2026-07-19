@@ -2,6 +2,7 @@
   "name": "ecommerce-frontend-monorepo",
   "private": true,
   "workspaces": [
+    "packages/shared",
     "packages/ecommerce-admin",
     "packages/ecommerce-web"
   ],

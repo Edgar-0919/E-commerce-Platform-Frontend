@@ -99,8 +99,8 @@ async function fetchUsers() {
     const res = await getUsers({
       keyword: searchKeyword.value,
       status: searchStatus.value,
-      page: currentPage.value,
-      size: pageSize.value
+      pageNum: currentPage.value,
+      pageSize: pageSize.value
     })
     tableData.value = res.records || []
     total.value = res.total || 0

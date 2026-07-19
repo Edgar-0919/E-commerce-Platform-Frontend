@@ -14,7 +14,6 @@ defineProps({
   items: {
     type: Array,
     default: () => []
-    // [{ name: '首页', path: '/home' }, { name: '当前页' }]
   }
 })
 </script>

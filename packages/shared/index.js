@@ -1,0 +1,10 @@
+// @ecommerce/shared — 统一导出
+export { default as BackToTop } from './components/BackToTop.vue'
+export { default as BreadcrumbNav } from './components/BreadcrumbNav.vue'
+export { default as EmptyState } from './components/EmptyState.vue'
+export { default as ErrorState } from './components/ErrorState.vue'
+export { default as LazyImage } from './components/LazyImage.vue'
+export { default as SkeletonLoader } from './components/SkeletonLoader.vue'
+export { createRequest } from './utils/request.js'
+export { formatPrice, formatDate, formatNumber } from './utils/format.js'
+export { useAsyncData } from './composables/useAsyncData.js'

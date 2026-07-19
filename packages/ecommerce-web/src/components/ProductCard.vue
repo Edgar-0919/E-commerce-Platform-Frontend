@@ -22,7 +22,6 @@
       </div>
       <div class="product-footer">
         <span v-if="product.description" class="sales">{{ product.description }}</span>
-        <span v-if="product.brandName" class="shop-tag">{{ product.brandName }}</span>
       </div>
     </div>
   </div>
@@ -31,7 +30,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import LazyImage from '@/components/common/LazyImage.vue'
+import { LazyImage } from '@ecommerce/shared'
 
 const router = useRouter()
 const props = defineProps({

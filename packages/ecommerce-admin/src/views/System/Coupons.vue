@@ -8,32 +8,33 @@
       <el-table :data="tableData" v-loading="loading" stripe>
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="name" label="模板名称" min-width="160" />
-        <el-table-column prop="couponType" label="类型" width="100">
+        <el-table-column prop="type" label="类型" width="100">
           <template #default="{ row }">
-            <el-tag>{{ row.couponType === 'DISCOUNT' ? '折扣券' : '满减券' }}</el-tag>
+            <el-tag>{{ typeText(row.type) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="discountValue" label="优惠值" width="100">
-          <template #default="{ row }">
-            <span v-if="row.couponType === 'DISCOUNT'">{{ row.discountValue }}折</span>
-            <span v-else>¥{{ row.discountValue }}</span>
-          </template>
+        <el-table-column prop="amount" label="优惠金额" width="100">
+          <template #default="{ row }">¥{{ row.amount }}</template>
         </el-table-column>
-        <el-table-column prop="minAmount" label="最低消费" width="100">
-          <template #default="{ row }">¥{{ row.minAmount || 0 }}</template>
+        <el-table-column prop="threshold" label="使用门槛" width="100">
+          <template #default="{ row }">¥{{ row.threshold || 0 }}</template>
         </el-table-column>
-        <el-table-column prop="validDays" label="有效天数" width="100" />
+        <el-table-column prop="totalCount" label="发放总量" width="100" />
+        <el-table-column prop="perUserLimit" label="每人限领" width="100" />
+        <el-table-column prop="startTime" label="开始时间" width="170" />
+        <el-table-column prop="endTime" label="结束时间" width="170" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'">{{ row.status === 1 ? '启用' : '禁用' }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="240" fixed="right">
           <template #default="{ row }">
             <el-button size="small" type="primary" link @click="handleEdit(row)">编辑</el-button>
             <el-button size="small" :type="row.status === 1 ? 'warning' : 'success'" link @click="handleStatusChange(row)">
               {{ row.status === 1 ? '禁用' : '启用' }}
             </el-button>
+            <el-button size="small" type="danger" link @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -51,28 +52,34 @@
       </div>
     </el-card>
 
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="520px" destroy-on-close>
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="560px" destroy-on-close>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="模板名称" prop="name">
           <el-input v-model="form.name" placeholder="请输入模板名称" />
         </el-form-item>
-        <el-form-item label="优惠类型" prop="couponType">
-          <el-radio-group v-model="form.couponType">
-            <el-radio value="DISCOUNT">折扣券</el-radio>
-            <el-radio value="FULL_REDUCTION">满减券</el-radio>
+        <el-form-item label="优惠类型" prop="type">
+          <el-radio-group v-model="form.type">
+            <el-radio :value="1">满减券</el-radio>
+            <el-radio :value="2">折扣券</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="优惠值" prop="discountValue">
-          <el-input v-model.number="form.discountValue" :placeholder="form.couponType === 'DISCOUNT' ? '请输入折扣值（如8.5）' : '请输入减扣金额'" />
+        <el-form-item label="优惠金额" prop="amount">
+          <el-input v-model.number="form.amount" :placeholder="form.type === 2 ? '请输入折扣率（如0.85）' : '请输入减扣金额'" />
         </el-form-item>
-        <el-form-item label="最低消费" prop="minAmount">
-          <el-input v-model.number="form.minAmount" placeholder="0表示无门槛" />
+        <el-form-item label="使用门槛" prop="threshold">
+          <el-input v-model.number="form.threshold" placeholder="0表示无门槛" />
         </el-form-item>
-        <el-form-item label="有效天数" prop="validDays">
-          <el-input v-model.number="form.validDays" placeholder="领取后有效天数" />
+        <el-form-item label="发放总量" prop="totalCount">
+          <el-input v-model.number="form.totalCount" placeholder="请输入发放总数量" />
         </el-form-item>
-        <el-form-item label="发放数量" prop="totalQuantity">
-          <el-input v-model.number="form.totalQuantity" placeholder="请输入发放总数量" />
+        <el-form-item label="每人限领" prop="perUserLimit">
+          <el-input v-model.number="form.perUserLimit" placeholder="每人限领数量" />
+        </el-form-item>
+        <el-form-item label="开始时间" prop="startTime">
+          <el-date-picker v-model="form.startTime" type="datetime" placeholder="选择开始时间" value-format="YYYY-MM-DD HH:mm:ss" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="结束时间" prop="endTime">
+          <el-date-picker v-model="form.endTime" type="datetime" placeholder="选择结束时间" value-format="YYYY-MM-DD HH:mm:ss" style="width: 100%" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -86,7 +93,7 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getCouponTemplates, createCouponTemplate, updateCouponTemplate, updateTemplateStatus } from '@/api/admin'
+import { getCouponTemplates, createCouponTemplate, updateCouponTemplate, updateTemplateStatus, deleteCouponTemplate } from '@/api/admin'
 
 const tableData = ref([])
 const loading = ref(false)
@@ -100,28 +107,38 @@ const submitting = ref(false)
 const editingId = ref(null)
 const formRef = ref(null)
 
+// 类型映射: 1满减券 2折扣券 3直减券
+const typeMap = { 1: '满减券', 2: '折扣券', 3: '直减券' }
+function typeText(type) {
+  return typeMap[type] || '未知'
+}
+
 const form = reactive({
   name: '',
-  couponType: 'FULL_REDUCTION',
-  discountValue: null,
-  minAmount: 0,
-  validDays: 30,
-  totalQuantity: 100
+  type: 1,
+  amount: null,
+  threshold: 0,
+  totalCount: 100,
+  perUserLimit: 1,
+  startTime: '',
+  endTime: ''
 })
 
 const rules = {
   name: [{ required: true, message: '请输入模板名称', trigger: 'blur' }],
-  couponType: [{ required: true, message: '请选择优惠类型', trigger: 'change' }],
-  discountValue: [{ required: true, message: '请输入优惠值', trigger: 'blur' }],
-  validDays: [{ required: true, message: '请输入有效天数', trigger: 'blur' }]
+  type: [{ required: true, message: '请选择优惠类型', trigger: 'change' }],
+  amount: [{ required: true, message: '请输入优惠金额', trigger: 'blur' }],
+  totalCount: [{ required: true, message: '请输入发放总量', trigger: 'blur' }],
+  startTime: [{ required: true, message: '请选择开始时间', trigger: 'change' }],
+  endTime: [{ required: true, message: '请选择结束时间', trigger: 'change' }]
 }
 
 async function fetchCoupons() {
   loading.value = true
   try {
     const res = await getCouponTemplates({
-      page: currentPage.value,
-      size: pageSize.value
+      pageNum: currentPage.value,
+      pageSize: pageSize.value
     })
     tableData.value = res.records || []
     total.value = res.total || 0
@@ -136,11 +153,13 @@ function handleAdd() {
   editingId.value = null
   dialogTitle.value = '新增优惠券模板'
   form.name = ''
-  form.couponType = 'FULL_REDUCTION'
-  form.discountValue = null
-  form.minAmount = 0
-  form.validDays = 30
-  form.totalQuantity = 100
+  form.type = 1
+  form.amount = null
+  form.threshold = 0
+  form.totalCount = 100
+  form.perUserLimit = 1
+  form.startTime = ''
+  form.endTime = ''
   dialogVisible.value = true
 }
 
@@ -148,11 +167,13 @@ function handleEdit(row) {
   editingId.value = row.id
   dialogTitle.value = '编辑优惠券模板'
   form.name = row.name
-  form.couponType = row.couponType
-  form.discountValue = row.discountValue
-  form.minAmount = row.minAmount
-  form.validDays = row.validDays
-  form.totalQuantity = row.totalQuantity
+  form.type = row.type
+  form.amount = row.amount
+  form.threshold = row.threshold ?? 0
+  form.totalCount = row.totalCount
+  form.perUserLimit = row.perUserLimit ?? 1
+  form.startTime = row.startTime ?? ''
+  form.endTime = row.endTime ?? ''
   dialogVisible.value = true
 }
 
@@ -165,10 +186,10 @@ async function handleSubmit() {
   submitting.value = true
   try {
     if (editingId.value) {
-      await updateCouponTemplate(editingId.value, form)
+      await updateCouponTemplate(editingId.value, { ...form })
       ElMessage.success('更新成功')
     } else {
-      await createCouponTemplate(form)
+      await createCouponTemplate({ ...form })
       ElMessage.success('创建成功')
     }
     dialogVisible.value = false
@@ -187,6 +208,17 @@ async function handleStatusChange(row) {
     await ElMessageBox.confirm(`确定要${action}该模板吗？`, '提示', { type: 'warning' })
     await updateTemplateStatus(row.id, newStatus)
     ElMessage.success(`${action}成功`)
+    fetchCoupons()
+  } catch {
+    // cancelled
+  }
+}
+
+async function handleDelete(row) {
+  try {
+    await ElMessageBox.confirm('确定要删除该优惠券模板吗？', '警告', { type: 'warning' })
+    await deleteCouponTemplate(row.id)
+    ElMessage.success('删除成功')
     fetchCoupons()
   } catch {
     // cancelled

@@ -17,6 +17,12 @@
         </div>
 
         <div v-else class="address-list">
+          <div class="list-header">
+            <button class="add-btn-inline" @click="showAddModal = true">
+              <Plus />
+              <span>添加收货地址</span>
+            </button>
+          </div>
           <div
             v-for="addr in addressList"
             :key="addr.id"
@@ -107,12 +113,6 @@
         </div>
       </div>
     </template>
-
-    <!-- 底部添加按钮 -->
-    <button v-if="!loading && addressList.length > 0" class="add-btn" @click="showAddModal = true">
-      <Plus />
-      <span>添加收货地址</span>
-    </button>
   </div>
 </template>
 
@@ -122,8 +122,9 @@ import { useRouter } from 'vue-router'
 import { MapLocation, Plus } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getAddressList, addAddress, updateAddress, deleteAddress } from '@/api/user'
-import BreadcrumbNav from '@/components/common/BreadcrumbNav.vue'
-import SkeletonLoader from '@/components/common/SkeletonLoader.vue'
+import { BreadcrumbNav } from '@ecommerce/shared'
+import { SkeletonLoader } from '@ecommerce/shared'
+import { provinces, getCities, getDistricts } from '@ecommerce/shared/utils/regionData'
 
 const router = useRouter()
 
@@ -143,33 +144,14 @@ const formData = reactive({
   isDefault: false
 })
 
-const provinces = ['北京市', '上海市', '广东省', '浙江省', '江苏省']
-
-const citiesMap = {
-  '北京市': ['东城区', '西城区', '朝阳区', '海淀区', '丰台区'],
-  '上海市': ['黄浦区', '徐汇区', '浦东新区', '长宁区', '静安区'],
-  '广东省': ['广州市', '深圳市', '东莞市', '佛山市', '中山市'],
-  '浙江省': ['杭州市', '宁波市', '温州市', '嘉兴市', '绍兴市'],
-  '江苏省': ['南京市', '苏州市', '无锡市', '常州市', '南通市']
-}
-
-const districtsMap = {
-  '东城区': ['东华门街道', '景山街道', '交道口街道'],
-  '西城区': ['西长安街街道', '新街口街道', '金融街街道'],
-  '广州市': ['天河区', '越秀区', '白云区', '海珠区', '番禺区'],
-  '深圳市': ['南山区', '福田区', '宝安区', '龙华区', '龙岗区'],
-  '杭州市': ['西湖区', '拱墅区', '江干区', '滨江区', '余杭区'],
-  '南京市': ['玄武区', '秦淮区', '鼓楼区', '建邺区', '栖霞区']
-}
-
 const cities = computed(() => {
   if (!formData.province) return []
-  return citiesMap[formData.province] || []
+  return getCities(formData.province)
 })
 
 const districts = computed(() => {
-  if (!formData.city) return []
-  return districtsMap[formData.city] || []
+  if (!formData.province || !formData.city) return []
+  return getDistricts(formData.province, formData.city)
 })
 
 function onProvinceChange() {
@@ -335,6 +317,36 @@ onMounted(() => {
   gap: 12px;
 }
 
+.list-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.add-btn-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  background: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: opacity var(--duration-fast);
+}
+
+.add-btn-inline:hover {
+  opacity: 0.9;
+}
+
+.add-btn-inline svg {
+  width: 14px;
+  height: 14px;
+}
+
 .address-card {
   background: var(--bg-white);
   border-radius: var(--radius-lg);
@@ -408,34 +420,6 @@ onMounted(() => {
 .action-btn.delete {
   background: var(--danger-bg);
   color: var(--danger-color);
-}
-
-.add-btn {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 12px 32px;
-  background: var(--primary-color);
-  color: #fff;
-  border: none;
-  border-radius: 24px;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-  box-shadow: var(--shadow-md);
-  transition: opacity var(--duration-fast);
-}
-
-.add-btn:hover {
-  opacity: 0.9;
-}
-
-.add-btn svg {
-  font-size: 16px;
 }
 
 .modal-overlay {

@@ -17,14 +17,14 @@
       <div class="checkout-content">
         <!-- 收货地址 -->
         <div class="section-card">
-          <div class="section-header">
-            <h3>收货地址</h3>
-            <button class="link-btn" @click="showAddressForm = true">+ 新增地址</button>
-          </div>
+        <div class="section-header">
+          <h3>收货地址</h3>
+          <button class="link-btn" @click="showAddressModal = true">+ 新增地址</button>
+        </div>
           <div v-if="addresses.length === 0" class="empty-tip">暂无收货地址，请先添加</div>
           <div v-else class="address-list">
             <div
-              v-for="addr in addresses"
+              v-for="addr in addresses.filter(Boolean)"
               :key="addr.id"
               class="address-item"
               :class="{ active: selectedAddressId === addr.id }"
@@ -52,9 +52,9 @@
                 <h4>{{ item.productName }}</h4>
                 <p class="item-spec">{{ item.specDesc || '' }}</p>
               </div>
-              <div class="item-price">
-                <span class="price-text">¥{{ item.price.toFixed(2) }}</span>
-                <span class="qty-text">x{{ item.quantity }}</span>
+              <div class="item-right">
+                <span class="item-price">¥{{ item.price.toFixed(2) }}</span>
+                <span class="item-quantity">x{{ item.quantity }}</span>
               </div>
             </div>
           </div>
@@ -102,23 +102,92 @@
           {{ submitting ? '提交中...' : `提交订单 (实付 ¥${payAmount.toFixed(2)})` }}
         </button>
       </div>
+
+      <!-- 新增地址弹窗 -->
+      <div v-if="showAddressModal" class="modal-overlay" @click.self="closeAddressModal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>添加收货地址</h3>
+            <button class="modal-close" @click="closeAddressModal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-item">
+              <label>收货人</label>
+              <input
+                v-model="addressForm.receiverName"
+                type="text"
+                placeholder="请输入收货人姓名"
+                class="form-input"
+              />
+            </div>
+            <div class="form-item">
+              <label>手机号</label>
+              <input
+                v-model="addressForm.phone"
+                type="tel"
+                placeholder="请输入手机号码"
+                class="form-input"
+              />
+            </div>
+            <div class="form-item">
+              <label>所在地区</label>
+              <div class="region-picker">
+                <select v-model="addressForm.province" class="region-select" @change="onProvinceChange">
+                  <option value="">请选择省份</option>
+                  <option v-for="p in provinces" :key="p" :value="p">{{ p }}</option>
+                </select>
+                <select v-model="addressForm.city" class="region-select" @change="onCityChange">
+                  <option value="">请选择城市</option>
+                  <option v-for="c in cities" :key="c" :value="c">{{ c }}</option>
+                </select>
+                <select v-model="addressForm.district" class="region-select">
+                  <option value="">请选择区县</option>
+                  <option v-for="d in districts" :key="d" :value="d">{{ d }}</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-item">
+              <label>详细地址</label>
+              <textarea
+                v-model="addressForm.detail"
+                placeholder="请输入详细地址"
+                class="form-textarea"
+              ></textarea>
+            </div>
+            <div class="form-item checkbox-item">
+              <input
+                v-model="addressForm.isDefault"
+                type="checkbox"
+                id="addressIsDefault"
+                class="form-checkbox"
+              />
+              <label for="addressIsDefault">设为默认地址</label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="modal-btn cancel" @click="closeAddressModal">取消</button>
+            <button class="modal-btn confirm" @click="submitAddress">确认添加</button>
+          </div>
+        </div>
+      </div>
     </template>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { getCartList } from '@/api/cart'
-import { getAddressList } from '@/api/user'
+import { getAddressList, addAddress } from '@/api/user'
 import { getMyCoupons } from '@/api/marketing'
 import { createOrder } from '@/api/order'
 import { ElMessage } from 'element-plus'
-import LazyImage from '@/components/common/LazyImage.vue'
-import SkeletonLoader from '@/components/common/SkeletonLoader.vue'
-import ErrorState from '@/components/common/ErrorState.vue'
-import EmptyState from '@/components/common/EmptyState.vue'
-import BreadcrumbNav from '@/components/common/BreadcrumbNav.vue'
+import { LazyImage } from '@ecommerce/shared'
+import { SkeletonLoader } from '@ecommerce/shared'
+import { ErrorState } from '@ecommerce/shared'
+import { EmptyState } from '@ecommerce/shared'
+import { BreadcrumbNav } from '@ecommerce/shared'
+import { provinces, getCities, getDistricts } from '@ecommerce/shared/utils/regionData'
 
 const router = useRouter()
 
@@ -132,7 +201,27 @@ const coupons = ref([])
 const selectedAddressId = ref(null)
 const selectedCouponId = ref(null)
 const remark = ref('')
-const showAddressForm = ref(false)
+const showAddressModal = ref(false)
+
+const addressForm = reactive({
+  receiverName: '',
+  phone: '',
+  province: '',
+  city: '',
+  district: '',
+  detail: '',
+  isDefault: false
+})
+
+const cities = computed(() => {
+  if (!addressForm.province) return []
+  return getCities(addressForm.province)
+})
+
+const districts = computed(() => {
+  if (!addressForm.province || !addressForm.city) return []
+  return getDistricts(addressForm.province, addressForm.city)
+})
 
 const totalAmount = computed(() => {
   return orderItems.value.reduce((sum, item) => sum + item.price * item.quantity, 0)
@@ -155,6 +244,70 @@ const payAmount = computed(() => {
 
 function goToCart() {
   router.push('/cart')
+}
+
+function closeAddressModal() {
+  showAddressModal.value = false
+  addressForm.receiverName = ''
+  addressForm.phone = ''
+  addressForm.province = ''
+  addressForm.city = ''
+  addressForm.district = ''
+  addressForm.detail = ''
+  addressForm.isDefault = false
+}
+
+function onProvinceChange() {
+  addressForm.city = ''
+  addressForm.district = ''
+}
+
+function onCityChange() {
+  addressForm.district = ''
+}
+
+async function submitAddress() {
+  if (!addressForm.receiverName) {
+    ElMessage.warning('请输入收货人姓名')
+    return
+  }
+  if (!addressForm.phone || !/^1[3-9]\d{9}$/.test(addressForm.phone)) {
+    ElMessage.warning('请输入正确的手机号码')
+    return
+  }
+  if (!addressForm.province || !addressForm.city || !addressForm.district) {
+    ElMessage.warning('请选择完整的地区信息')
+    return
+  }
+  if (!addressForm.detail.trim()) {
+    ElMessage.warning('请输入详细地址')
+    return
+  }
+
+  try {
+    const result = await addAddress(addressForm)
+    if (result && result.id != null) {
+      addresses.value.push(result)
+      selectedAddressId.value = result.id
+    } else {
+      // 后端返回的 result 可能没有 id（例如后端返回 data 为空），
+      // 此时重新拉一次最新地址列表确保数据一致
+      ElMessage.warning('地址已添加，正在刷新列表...')
+      try {
+        const latest = await getAddressList()
+        addresses.value = latest || []
+        if (addresses.value.length > 0) {
+          selectedAddressId.value = addresses.value[0].id
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    closeAddressModal()
+    ElMessage.success('添加成功')
+  } catch (e) {
+    ElMessage.error(e.message || '添加失败')
+  }
 }
 
 function toggleCoupon(id) {
@@ -200,8 +353,8 @@ async function submitOrder() {
       remark: remark.value || undefined
     }
     const order = await createOrder(orderData)
-    // 将 orderId 一并传递，支付接口需要 orderId 参数创建支付单据
-    router.push(`/payment?orderNo=${order.orderNo}&amount=${payAmount.value}&orderId=${order.id}`)
+    // 将 orderId 传递到支付页面，支付接口需要 orderId 参数创建支付单据
+    router.push(`/payment/${order.id}`)
   } catch (e) {
     ElMessage.error(e.message || '提交订单失败')
   } finally {
@@ -257,6 +410,13 @@ onMounted(() => {
   background: none;
   border: none;
   cursor: pointer;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  transition: all var(--duration-fast);
+}
+
+.link-btn:hover {
+  background: var(--price-bg);
 }
 
 .empty-tip {
@@ -314,7 +474,7 @@ onMounted(() => {
 
 .order-item {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   padding: 12px 0;
 }
@@ -324,17 +484,27 @@ onMounted(() => {
 }
 
 .item-img {
-  width: 64px;
-  height: 64px;
+  width: 80px !important;
+  height: 80px !important;
   border-radius: var(--radius-sm);
   flex-shrink: 0;
   border: 1px solid var(--border-light);
   overflow: hidden;
+  background: var(--bg-white);
+  display: block;
+}
+
+.item-img img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
 }
 
 .item-info {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .item-info h4 {
@@ -349,11 +519,29 @@ onMounted(() => {
   font-size: 12px;
   color: var(--text-light);
   margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.item-right {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 100px;
 }
 
 .item-price {
-  text-align: right;
-  flex-shrink: 0;
+  font-size: 14px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--danger-color);
+}
+
+.item-quantity {
+  font-size: 12px;
+  color: var(--text-light);
 }
 
 .price-text {
@@ -510,5 +698,169 @@ onMounted(() => {
     gap: 12px;
     align-items: flex-end;
   }
+
+  .region-picker {
+    flex-direction: column;
+  }
+}
+
+/* 弹窗样式 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+  padding: 20px;
+}
+
+.modal-content {
+  background: var(--bg-white);
+  border-radius: var(--radius-lg);
+  width: 100%;
+  max-width: 480px;
+  overflow: hidden;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.modal-header h3 {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-primary);
+}
+
+.modal-close {
+  font-size: 20px;
+  color: var(--text-light);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.form-item {
+  margin-bottom: 16px;
+}
+
+.form-item label {
+  display: block;
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.form-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  color: var(--text-primary);
+  resize: vertical;
+  min-height: 80px;
+  box-sizing: border-box;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.region-picker {
+  display: flex;
+  gap: 8px;
+}
+
+.region-select {
+  flex: 1;
+  padding: 10px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  color: var(--text-primary);
+  background: #fff;
+}
+
+.region-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-checkbox {
+  width: 16px;
+  height: 16px;
+}
+
+.modal-footer {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-light);
+  justify-content: flex-end;
+}
+
+.modal-btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition: opacity var(--duration-fast);
+}
+
+.modal-btn:hover {
+  opacity: 0.9;
+}
+
+.modal-btn.cancel {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.modal-btn.confirm {
+  background: var(--primary-color);
+  color: #fff;
 }
 </style>

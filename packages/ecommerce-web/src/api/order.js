@@ -26,3 +26,11 @@ export function getOrderDetail(id) {
 export function cancelOrder(id) {
   return request.put(`/order/${id}/cancel`)
 }
+
+export function confirmReceiveOrder(id) {
+  return request.put(`/order/${id}/receive`)
+}
+
+export function requestRefund(data) {
+  return request.post('/payment/refund/apply', data)
+}

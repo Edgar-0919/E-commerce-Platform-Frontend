@@ -29,13 +29,7 @@ export function getMyCoupons(status) {
   return request.get('/marketing/coupon/my', { params: { status } })
 }
 
-/**
- * 我的积分
- * @returns {Promise<Object>} UserPoints
- */
-export function getMyPoints() {
-  return request.get('/marketing/points')
-}
+
 
 /**
  * 促销活动列表

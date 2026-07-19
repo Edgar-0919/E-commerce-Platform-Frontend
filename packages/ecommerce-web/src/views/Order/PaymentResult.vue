@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="payment-result-page">
     <div class="result-card" v-if="!loading">
       <!-- 成功状态 -->
@@ -53,7 +53,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { queryPayStatus } from '@/api/payment'
 import { getOrderDetail } from '@/api/order'
-import SkeletonLoader from '@/components/common/SkeletonLoader.vue'
+import { SkeletonLoader } from '@ecommerce/shared'
 
 const route = useRoute()
 const router = useRouter()
