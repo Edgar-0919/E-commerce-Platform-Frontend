@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="payment-page">
     <BreadcrumbNav :items="[{ name: '购物车', path: '/cart' }, { name: '确认订单', path: '/checkout' }, { name: '支付' }]" />
 
@@ -54,43 +54,14 @@
           </div>
         </div>
 
-        <!-- 优惠券 -->
-        <div class="section-card">
+        <!-- 优惠信息（已在结算页选定，此处仅展示） -->
+        <div v-if="discountAmount > 0" class="section-card">
           <div class="section-header">
-            <h3>优惠券</h3>
-            <span v-if="selectedCoupon" class="coupon-discount">-¥{{ couponDiscount.toFixed(2) }}</span>
+            <h3>优惠信息</h3>
+            <span class="coupon-discount">-¥{{ discountAmount.toFixed(2) }}</span>
           </div>
-          <div v-if="availableCoupons.length === 0" class="empty-tip">暂无可用优惠券</div>
-          <div v-else class="coupon-list">
-            <div
-              v-for="cp in availableCoupons"
-              :key="cp.id"
-              class="coupon-item"
-              :class="{ active: selectedCoupon?.id === cp.id }"
-              @click="toggleCoupon(cp)"
-            >
-              <div class="coupon-left">
-                <span class="coupon-value">¥{{ cp.discountValue }}</span>
-                <span class="coupon-condition">满{{ cp.minAmount }}可用</span>
-              </div>
-              <div class="coupon-right">
-                <span class="coupon-name">{{ cp.name }}</span>
-                <span class="coupon-date">{{ formatDate(cp.endTime) }}到期</span>
-              </div>
-              <div class="coupon-check">
-                <span v-if="selectedCoupon?.id === cp.id" class="check-icon">&#10003;</span>
-              </div>
-            </div>
-            <div
-              v-if="selectedCoupon"
-              class="coupon-item"
-              :class="{ active: !selectedCoupon }"
-              @click="selectedCoupon = null"
-            >
-              <div class="coupon-right" style="flex: 1;">
-                <span class="coupon-name">不使用优惠券</span>
-              </div>
-            </div>
+          <div class="coupon-info-text">
+            <span>已使用优惠券，优惠金额 ¥{{ discountAmount.toFixed(2) }}</span>
           </div>
         </div>
 
@@ -100,9 +71,9 @@
             <span>商品金额</span>
             <span>¥{{ originalAmount.toFixed(2) }}</span>
           </div>
-          <div v-if="couponDiscount > 0" class="amount-row discount">
+          <div v-if="discountAmount > 0" class="amount-row discount">
             <span>优惠券优惠</span>
-            <span>-¥{{ couponDiscount.toFixed(2) }}</span>
+            <span>-¥{{ discountAmount.toFixed(2) }}</span>
           </div>
           <div class="amount-row total">
             <span>实付金额</span>
@@ -143,7 +114,6 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { createPayment, confirmPayment } from '@/api/payment'
-import { getMyCoupons } from '@/api/marketing'
 import { getOrderDetail } from '@/api/order'
 import { BreadcrumbNav } from '@ecommerce/shared'
 import { SkeletonLoader } from '@ecommerce/shared'
@@ -157,10 +127,11 @@ const showSuccessModal = ref(false)
 
 const orderId = ref(route.params.orderId || '')
 const orderNo = ref('')
+// 订单原始金额（优惠前）
 const originalAmount = ref(0)
+// 订单已应用的优惠金额（结算页选定优惠券后锁定）
+const discountAmount = ref(0)
 const selectedMethod = ref('alipay')
-const selectedCoupon = ref(null)
-const availableCoupons = ref([])
 const orderCreateTime = ref('')
 const productCount = ref(0)
 
@@ -170,50 +141,25 @@ const paymentMethods = [
   { key: 'bank', name: '银行卡', desc: '储蓄卡/信用卡', icon: '🏦' }
 ]
 
-const couponDiscount = computed(() => {
-  if (!selectedCoupon.value) return 0
-  if (originalAmount.value < selectedCoupon.value.minAmount) return 0
-  return selectedCoupon.value.discountValue
-})
-
+// 实付金额 = 订单原始金额 - 已锁定优惠
 const payAmount = computed(() => {
-  return Math.max(0, originalAmount.value - couponDiscount.value)
+  return Math.max(0, originalAmount.value - discountAmount.value)
 })
-
-function toggleCoupon(coupon) {
-  if (selectedCoupon.value?.id === coupon.id) {
-    selectedCoupon.value = null
-  } else {
-    selectedCoupon.value = coupon
-  }
-}
-
-function formatDate(dateStr) {
-  if (!dateStr) return '--'
-  const date = new Date(dateStr)
-  return `${date.getMonth() + 1}月${date.getDate()}日`
-}
 
 async function init() {
   loading.value = true
   try {
-    const [couponResult, orderResult] = await Promise.all([
-      getMyCoupons(1).catch(() => []),
-      getOrderDetail(orderId.value).catch(() => null)
-    ])
-    
+    const orderResult = await getOrderDetail(orderId.value).catch(() => null)
+
     if (orderResult) {
       orderNo.value = orderResult.orderNo
       orderCreateTime.value = orderResult.createTime
       productCount.value = orderResult.totalQuantity || orderResult.items?.length || 0
-      if (orderResult.payAmount) {
-        originalAmount.value = orderResult.payAmount
-      }
+      // 订单原始金额（优惠前）
+      originalAmount.value = orderResult.totalAmount || 0
+      // 订单已锁定的优惠金额（结算页选定优惠券后由后端 Feign 锁定）
+      discountAmount.value = orderResult.discountAmount || 0
     }
-    
-    availableCoupons.value = (couponResult || []).filter(cp => 
-      cp.status === 1 && cp.minAmount <= originalAmount.value
-    )
   } catch (e) {
     console.error('初始化失败', e)
   } finally {
@@ -223,13 +169,13 @@ async function init() {
 
 async function confirmPay() {
   if (paying.value) return
-  
+
   paying.value = true
   try {
-    // 传递 orderId，后端支服接口依赖此字段创建支付单据并进行幂等校验
-    await createPayment(orderId.value, orderNo.value, originalAmount.value, selectedMethod.value)
+    // 支付金额使用订单实付金额（已扣除优惠）
+    await createPayment(orderId.value, orderNo.value, payAmount.value, selectedMethod.value)
     await confirmPayment(orderNo.value)
-    
+
     showSuccessModal.value = true
   } catch (e) {
     ElMessage.error(e.message || '支付失败，请重试')
@@ -300,10 +246,10 @@ onMounted(() => {
   font-weight: var(--font-weight-semibold);
 }
 
-.empty-tip {
-  color: var(--text-light);
+.coupon-info-text {
+  color: var(--text-secondary);
   font-size: 14px;
-  padding: 12px 0;
+  padding: 8px 0;
 }
 
 .order-info {
@@ -388,74 +334,6 @@ onMounted(() => {
   color: #fff;
   border-radius: 50%;
   font-size: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.coupon-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.coupon-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  border: 2px solid var(--border-color);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all var(--duration-fast);
-}
-
-.coupon-item.active {
-  border-color: var(--primary-color);
-  background: var(--price-bg);
-}
-
-.coupon-left {
-  text-align: center;
-  padding-right: 16px;
-  border-right: 1px dashed var(--border-light);
-}
-
-.coupon-value {
-  display: block;
-  font-size: 20px;
-  font-weight: var(--font-weight-bold);
-  color: var(--danger-color);
-}
-
-.coupon-condition {
-  display: block;
-  font-size: 11px;
-  color: var(--text-light);
-  margin-top: 2px;
-}
-
-.coupon-right {
-  flex: 1;
-}
-
-.coupon-name {
-  display: block;
-  font-size: 14px;
-  color: var(--text-primary);
-  font-weight: var(--font-weight-medium);
-}
-
-.coupon-date {
-  display: block;
-  font-size: 12px;
-  color: var(--text-light);
-  margin-top: 4px;
-}
-
-.coupon-check {
-  width: 20px;
-  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;

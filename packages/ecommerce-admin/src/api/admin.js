@@ -40,6 +40,10 @@ export function getCategories() {
   return request.get('/admin/categories')
 }
 
+export function getSpecGroups(categoryId) {
+  return request.get('/admin/products/spec-groups', { params: { categoryId } })
+}
+
 export function createCategory(data) {
   return request.post('/admin/categories', data)
 }

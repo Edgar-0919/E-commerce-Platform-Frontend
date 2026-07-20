@@ -239,8 +239,8 @@ function fetchMerchants() {
   loading.value = true
   const params = { pageNum: pageNum.value, pageSize: pageSize.value, ...searchForm }
   getMerchants(params).then(res => {
-    merchantList.value = res.records || []
-    total.value = res.total || 0
+    merchantList.value = res.items || res.records || []
+    total.value = parseInt(res.total || 0, 10)
   }).finally(() => { loading.value = false })
 }
 
@@ -292,8 +292,8 @@ function fetchApplications() {
   applicationLoading.value = true
   const params = { pageNum: applicationPageNum.value, pageSize: applicationPageSize.value, ...applicationSearch }
   getMerchantApplications(params).then(res => {
-    applicationList.value = res.records || []
-    applicationTotal.value = res.total || 0
+    applicationList.value = res.items || res.records || []
+    applicationTotal.value = parseInt(res.total || 0, 10)
   }).finally(() => { applicationLoading.value = false })
 }
 

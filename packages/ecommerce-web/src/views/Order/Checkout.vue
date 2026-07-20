@@ -234,8 +234,11 @@ const selectedCoupon = computed(() => {
 const discountAmount = computed(() => {
   const cp = selectedCoupon.value
   if (!cp || totalAmount.value < cp.minAmount) return 0
-  if (cp.discountType === 1) return cp.discountValue
-  return totalAmount.value * (1 - cp.discountValue / 10)
+  // 类型1=满减券, 类型3=直减券：直接减扣金额
+  if (cp.discountType === 1 || cp.discountType === 3) return cp.discountValue
+  // 类型2=折扣券：amount 为折扣率（如 85 表示 8.5折），优惠金额 = 订单金额 * (1 - 折扣率/100)
+  if (cp.discountType === 2) return totalAmount.value * (1 - cp.discountValue / 100)
+  return 0
 })
 
 const payAmount = computed(() => {

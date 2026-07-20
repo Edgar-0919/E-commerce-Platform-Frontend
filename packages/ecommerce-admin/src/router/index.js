@@ -45,6 +45,12 @@ const routes = [
     meta: { title: '分类管理', requiresAuth: true, roles: ['ROLE_ADMIN'] }
   },
   {
+    path: '/admin/spec',
+    name: 'AdminSpec',
+    component: () => import('@/views/GoodsManage/SpecManage.vue'),
+    meta: { title: '规格管理', requiresAuth: true, roles: ['ROLE_ADMIN'] }
+  },
+  {
     path: '/admin/inventory',
     name: 'AdminInventory',
     component: () => import('@/views/GoodsManage/Inventory.vue'),

@@ -113,8 +113,8 @@ async function fetchRefunds() {
       params.status = filterStatus.value
     }
     const res = await getRefunds(params)
-    tableData.value = res.records || []
-    total.value = res.total || 0
+    tableData.value = res.items || res.records || []
+    total.value = parseInt(res.total || 0, 10)
   } catch {
     tableData.value = []
   } finally {

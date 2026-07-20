@@ -133,8 +133,8 @@ async function fetchInventory() {
     if (searchProductId.value) params.productId = searchProductId.value
     if (onlyLowStock.value) params.lowStock = true
     const res = await getInventoryList(params)
-    tableData.value = res.records || []
-    total.value = res.total || 0
+    tableData.value = res.items || res.records || []
+    total.value = parseInt(res.total || 0, 10)
   } catch {
     tableData.value = []
   } finally {

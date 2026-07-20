@@ -115,10 +115,17 @@
 
 .el-pagination .el-pager li.is-active {
   background-color: var(--primary-color);
+  color: #fff;
+  font-weight: 500;
 }
 
 .el-pagination .el-pager li:hover {
   color: var(--primary-color);
+}
+
+.el-pagination.is-background .el-pager li:not(.disabled).is-active {
+  background-color: var(--primary-color);
+  color: #fff;
 }
 
 .el-breadcrumb__item:last-child .el-breadcrumb__inner {

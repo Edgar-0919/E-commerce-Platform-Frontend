@@ -47,7 +47,7 @@
             <h4 class="coupon-name">{{ cp.name }}</h4>
             <p class="coupon-condition">满{{ cp.threshold }}元可用</p>
             <p class="coupon-date">{{ formatDate(cp.startTime) }} - {{ formatDate(cp.endTime) }}</p>
-            <p class="coupon-stock">剩余 {{ cp.issuedCount }}/{{ cp.totalCount }}</p>
+            <p class="coupon-stock">剩余 {{ cp.totalCount - cp.issuedCount }}/{{ cp.totalCount }}</p>
           </div>
           <el-button
             class="receive-btn"

@@ -59,7 +59,7 @@
           <div class="order-summary">
             <span class="summary-text">共{{ order.totalQuantity }}件商品</span>
             <span class="summary-label">实付款：</span>
-            <span class="summary-price">¥{{ order.totalAmount }}</span>
+            <span class="summary-price">¥{{ order.payAmount }}</span>
           </div>
           <div class="order-actions">
             <button

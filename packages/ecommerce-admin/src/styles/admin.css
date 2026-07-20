@@ -4,34 +4,56 @@
    本文件仅包含 B 端特有的布局和组件样式
    ============================================ */
 
-/* ===== 隐藏浏览器右侧滚动条 ===== */
+/* ===== 页面自然滚动模式（纯分页） ===== */
 html, body, #app {
-  overflow: hidden;
-  height: 100%;
   margin: 0;
 }
 
-/* admin-main 内部滚动（视觉上不显示滚动条） */
-.admin-main {
-  height: calc(100vh - 60px);
+/* 允许页面整体自然滚动 */
+#app {
   overflow-y: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
 }
 
-.admin-main::-webkit-scrollbar {
-  display: none;
-  width: 0;
-  height: 0;
+/* 主内容区允许自然滚动 */
+.el-main {
+  overflow: visible;
 }
 
 /* ===== 侧边栏菜单深度定制 ===== */
+.admin-sidebar {
+  background-color: #212529 !important;
+}
+
 .admin-sidebar .el-menu {
   --el-menu-bg-color: #212529;
   --el-menu-text-color: #8D9096;
   --el-menu-hover-bg-color: rgba(201, 169, 110, 0.1);
   --el-menu-active-color: #C9A96E;
   border-right: none !important;
+  background-color: #212529 !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.15) #212529;
+}
+
+.admin-sidebar .el-menu::-webkit-scrollbar {
+  width: 4px;
+}
+
+.admin-sidebar .el-menu::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+}
+
+.admin-sidebar .el-menu::-webkit-scrollbar-track {
+  background-color: #212529;
+}
+
+.admin-sidebar .el-sub-menu {
+  background-color: #212529 !important;
+}
+
+.admin-sidebar .el-sub-menu .el-menu-item {
+  background-color: #212529 !important;
 }
 
 .admin-sidebar .el-menu-item:hover {

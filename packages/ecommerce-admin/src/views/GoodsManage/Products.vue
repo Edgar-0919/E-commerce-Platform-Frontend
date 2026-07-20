@@ -73,8 +73,8 @@ async function fetchProducts() {
       page: currentPage.value,
       size: pageSize.value
     })
-    tableData.value = res.records || []
-    total.value = res.total || 0
+    tableData.value = res.items || res.records || []
+    total.value = parseInt(res.total || 0, 10)
   } catch {
     tableData.value = []
   } finally {

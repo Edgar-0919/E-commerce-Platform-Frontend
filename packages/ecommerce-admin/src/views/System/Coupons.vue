@@ -130,7 +130,16 @@ const rules = {
   amount: [{ required: true, message: '请输入优惠金额', trigger: 'blur' }],
   totalCount: [{ required: true, message: '请输入发放总量', trigger: 'blur' }],
   startTime: [{ required: true, message: '请选择开始时间', trigger: 'change' }],
-  endTime: [{ required: true, message: '请选择结束时间', trigger: 'change' }]
+  endTime: [
+    { required: true, message: '请选择结束时间', trigger: 'change' },
+    { validator: (rule, value, callback) => {
+      if (form.startTime && value && form.startTime >= value) {
+        callback(new Error('结束时间必须晚于开始时间'))
+      } else {
+        callback()
+      }
+    }, trigger: 'change' }
+  ]
 }
 
 async function fetchCoupons() {
@@ -163,6 +172,18 @@ function handleAdd() {
   dialogVisible.value = true
 }
 
+function formatDateForPicker(val) {
+  if (!val) return ''
+  // 后端返回字符串格式 "yyyy-MM-dd HH:mm:ss" 直接使用
+  if (typeof val === 'string') return val
+  // 兼容 Jackson 默认序列化的数组格式 [2026, 7, 19, 10, 0, 0]
+  if (Array.isArray(val) && val.length >= 5) {
+    const [y, m, d, h, min, s] = val
+    return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')} ${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}:${String(s || 0).padStart(2, '0')}`
+  }
+  return ''
+}
+
 function handleEdit(row) {
   editingId.value = row.id
   dialogTitle.value = '编辑优惠券模板'
@@ -172,8 +193,8 @@ function handleEdit(row) {
   form.threshold = row.threshold ?? 0
   form.totalCount = row.totalCount
   form.perUserLimit = row.perUserLimit ?? 1
-  form.startTime = row.startTime ?? ''
-  form.endTime = row.endTime ?? ''
+  form.startTime = formatDateForPicker(row.startTime)
+  form.endTime = formatDateForPicker(row.endTime)
   dialogVisible.value = true
 }
 

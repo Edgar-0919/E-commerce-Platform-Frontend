@@ -161,8 +161,8 @@ async function fetchOrders() {
       params.endTime = filterDateRange.value[1] + ' 23:59:59'
     }
     const res = await getOrders(params)
-    tableData.value = res.records || []
-    total.value = res.total || 0
+    tableData.value = res.items || res.records || []
+    total.value = parseInt(res.total || 0, 10)
   } catch {
     tableData.value = []
   } finally {

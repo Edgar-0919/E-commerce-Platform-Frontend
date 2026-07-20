@@ -24,6 +24,7 @@
           </template>
           <el-menu-item index="/admin/products">商品列表</el-menu-item>
           <el-menu-item v-if="isAdmin" index="/admin/categories">分类管理</el-menu-item>
+          <el-menu-item v-if="isAdmin" index="/admin/spec">规格管理</el-menu-item>
           <el-menu-item index="/admin/inventory">库存管理</el-menu-item>
         </el-sub-menu>
         <el-menu-item index="/admin/orders">
@@ -118,14 +119,14 @@ function handleLogout() {
 </script>
 
 <style scoped>
-.admin-layout { height: 100vh; }
-.admin-sidebar { background-color: #212529; overflow: hidden; transition: width 0.3s; }
-.sidebar-logo { height: 60px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; font-weight: bold; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.1); white-space: nowrap; overflow: hidden; }
+.admin-layout { height: 100vh; overflow: hidden; }
+.admin-sidebar { background-color: #212529; overflow: hidden; transition: width 0.3s; display: flex; flex-direction: column; }
+.sidebar-logo { height: 60px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 18px; font-weight: bold; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.1); white-space: nowrap; overflow: hidden; }
 .logo-collapsed { font-size: 14px; }
-.admin-sidebar .el-menu { border-right: none; }
+.admin-sidebar .el-menu { border-right: none; flex: 1; overflow-y: auto; overflow-x: hidden; }
 .admin-header { display: flex; align-items: center; justify-content: space-between; background: var(--bg-white); border-bottom: 1px solid var(--border-color); padding: 0 20px; }
 .header-left, .header-right { display: flex; align-items: center; }
 .user-info { display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-primary); }
 .username { font-size: 14px; }
-.admin-main { background-color: var(--bg-page); padding: 20px; min-height: calc(100vh - 60px); }
+.admin-main { background-color: var(--bg-page); padding: 20px; overflow-y: auto; height: calc(100vh - 60px); }
 </style>
